@@ -1,0 +1,22 @@
+{
+  "name": "dojo-cli",
+  "version": "0.0.1",
+  "description": "Dojo 2 CLI utility",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "keywords": [
+    "dojo",
+    "cli"
+  ],
+  "author": "Tom Dye",
+  "license": "BSD-3-Clause",
+  "bin": {
+    "dojo": "./index.js"
+  },
+  "preferGlobal": true,
+  "dependencies": {
+    "chalk": "^1.1.3"
+  }
+}
