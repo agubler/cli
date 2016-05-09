@@ -5,14 +5,14 @@ const program = require('commander');
 const chalk = require('chalk');
 const inquirer = require('inquirer');
 const _ = require('lodash');
-//const fs = require('fs');
+const fs = require('fs');
 //const fsEditor = require('mem-fs-editor');
 
 var memFs = require('mem-fs');
 var editor = require('mem-fs-editor');
 
 var store = memFs.create();
-var fs = editor.create(store);
+var fsEditor = editor.create(store);
 
 //fs.write('somefile.js', 'var a = 1;');
 
@@ -169,10 +169,10 @@ proceedCheck()
 		_.merge(appDetails, answers);
 		console.log(JSON.stringify(appDetails, null, '  '));
 	}).then(() => {
-		fs.copyTpl(
+		fsEditor.copyTpl(
 			path.templates + '_package.json',
 			path.destination + 'package.json',
 			appDetails
 		);
-		fs.commit();
+		fsEditor.commit();
 	});
