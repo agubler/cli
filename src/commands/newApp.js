@@ -1,18 +1,18 @@
 #!/usr/bin/env node
 'use strict';
 
-const program = require('commander');
+//const program = require('commander');
 const chalk = require('chalk');
 const inquirer = require('inquirer');
 const _ = require('lodash');
 const fs = require('fs');
 //const fsEditor = require('mem-fs-editor');
 
-var memFs = require('mem-fs');
-var editor = require('mem-fs-editor');
-
-var store = memFs.create();
-var fsEditor = editor.create(store);
+// var memFs = require('mem-fs');
+// var editor = require('mem-fs-editor');
+//
+// var store = memFs.create();
+// var fsEditor = editor.create(store);
 
 //fs.write('somefile.js', 'var a = 1;');
 

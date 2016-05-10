@@ -1,13 +1,12 @@
 {
   "name": "dojo-cli",
-  "version": "2.0.0-pre",
+  "version": "0.0.3-pre",
   "description": "Dojo 2 CLI utility",
   "homepage": "http://dojotoolkit.org",
   "bugs": {
     "url": "https://github.com/dojo/cli/issues"
   },
   "license": "BSD-3-Clause",
-  "main": "dojo.js",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1"
   },
@@ -16,16 +15,13 @@
     "cli"
   ],
   "bin": {
-    "dojo": "./dojo.js"
+      "dojo": "bin/dojo.js"
   },
   "preferGlobal": true,
   "dependencies": {
     "chalk": "^1.1.3",
-    "commander": "^2.9.0",
     "inquirer": "^1.0.2",
     "lodash": "^4.11.2",
-    "mem-fs": "^1.1.2",
-    "mem-fs-editor": "^2.2.0",
-    "mkdirp": "^0.5.1"
+    "yargs": "^4.7.0"
   }
 }
