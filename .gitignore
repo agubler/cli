@@ -1,2 +1,5 @@
 node_modules
-_built
+_build
+.tscache
+dist
+typings

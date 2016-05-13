@@ -1,0 +1,12 @@
+{
+  "dependencies": {},
+  "devDependencies": {
+    "chalk": "registry:npm/chalk#1.0.0+20160211003958",
+    "inquirer": "registry:npm/inquirer#1.0.0+20160427045422",
+    "lodash": "registry:npm/lodash#4.0.0+20160416211519",
+    "yargs": "github:Tomdye/npm-yargs"
+  },
+  "ambientDevDependencies": {
+    "node": "registry:dt/node#4.0.0+20160509154515"
+  }
+}

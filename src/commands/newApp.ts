@@ -1,12 +1,8 @@
-#!/usr/bin/env node
-'use strict';
-
-//const program = require('commander');
-const chalk = require('chalk');
-const inquirer = require('inquirer');
-const _ = require('lodash');
-const fs = require('fs');
-//const fsEditor = require('mem-fs-editor');
+import * as chalk from 'chalk';
+import * as inquirer from 'inquirer';
+import { merge } from 'lodash';
+import { readdirSync } from 'fs';
+// const fsEditor = require('mem-fs-editor');
 
 // var memFs = require('mem-fs');
 // var editor = require('mem-fs-editor');
@@ -14,66 +10,83 @@ const fs = require('fs');
 // var store = memFs.create();
 // var fsEditor = editor.create(store);
 
-//fs.write('somefile.js', 'var a = 1;');
+// fs.write('somefile.js', 'var a = 1;');
 
-program.parse(process.argv);
+// program.parse(process.argv);
+
+interface ProceedAnswers extends inquirer.Answers {
+	proceed: boolean;
+}
 
 const path = {
 	templates: __dirname + '/templates/',
 	destination: process.cwd() + '/'
 };
 
-
-console.log("This file is " + __filename);
-console.log("It's located in " + __dirname);
-console.log("The current working directory is " + process.cwd());
-
-
-if (!program.args.length) {
-	console.error(chalk.red('Error: ') + 'AppName is Required');
-	process.exit(1);
-}
-
-const folderContents = fs.readdirSync(path.destination);
-if (folderContents.length > 0) {
-	console.error(chalk.red('Error: ') + 'Directory is not empty');
-	process.exit(1);
-}
-
-let appDetails = {
-	name: program.args[0]
+const checkForAppName = (name: any): void => {
+	if (!name || name.length === 0) {
+		console.error(chalk.red('Error: ') + 'App Name is Required');
+		process.exit(1);
+	}
 };
 
-function proceedCheck() {
+const checkForEmptyDir = (dirPath: string, exit: boolean = false): void | boolean => {
+	const folderContents = readdirSync(dirPath);
+	const isEmpty = folderContents.length === 0;
+
+	if (!isEmpty && exit) {
+		console.error(chalk.red('Error: ') + 'Directory is not empty');
+		process.exit(1);
+	} else {
+		return isEmpty;
+	}
+};
+
+const proceedCheck = (name: string) => {
 	return inquirer.prompt([{
 		type: 'confirm',
 		name: 'proceed',
-		message: `Do you wish to proceed with creating ${appDetails.name}?`,
+		message: `Do you wish to proceed with creating ${name}?`,
 		default: true
-	}]).then((response) => {
+	}]).then((response: ProceedAnswers) => {
 		if (!response.proceed) {
 			console.error(chalk.red('\nExiting: ') + 'User chose to exit');
 			process.exit(1);
 		}
 	});
-}
+};
 
+export const createNew = (name: string) => {
+	checkForAppName(name);
+	checkForEmptyDir(path.destination, true);
 
-let questions = [
-	{
-		type: 'checkbox',
-		name: 'packages',
-		message: 'Which packages would you like to use?',
-		choices: [
-			{ name: 'dojo-core', checked: true },
-			{ name: 'dojo-widgets'},
-			{ name: 'dojo-actions'},
-			{ name: 'dojo-compose'},
-			{ name: 'dojo-dom'}
-		]
-	}
-];
+	let appDetails = { name };
+	let questions = [
+		{
+			type: 'checkbox',
+			name: 'packages',
+			message: 'Which packages would you like to use?',
+			choices: [
+				{ name: 'dojo-core', checked: true },
+				{ name: 'dojo-widgets'},
+				{ name: 'dojo-actions'},
+				{ name: 'dojo-compose'},
+				{ name: 'dojo-dom'}
+			]
+		}
+	];
 
+	console.log(chalk.bold('Lets get started\n'));
+
+	proceedCheck(name)
+		.then(() => inquirer.prompt(questions))
+		.then((answers) => {
+			merge(appDetails, answers);
+			console.log(JSON.stringify(appDetails, null, '  '));
+		}).then(() => {
+			console.log('ALL DONE MATEY BOY!');
+		});
+};
 
 	//   {
 	//     type: 'confirm',
@@ -156,23 +169,7 @@ let questions = [
 	//       return answers.comments !== 'Nope, all good!';
 	//     }
 	//   }
-	//];
+	// ];
 
-//	return inquirer.prompt(questions);
-//}
-
-console.log(chalk.bold('Lets get started\n'));
-
-proceedCheck()
-	.then(() => inquirer.prompt(questions))
-	.then((answers) => {
-		_.merge(appDetails, answers);
-		console.log(JSON.stringify(appDetails, null, '  '));
-	}).then(() => {
-		fsEditor.copyTpl(
-			path.templates + '_package.json',
-			path.destination + 'package.json',
-			appDetails
-		);
-		fsEditor.commit();
-	});
+// return inquirer.prompt(questions);
+// }

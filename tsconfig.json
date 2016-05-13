@@ -1,0 +1,22 @@
+{
+	"version": "1.8.10",
+	"compilerOptions": {
+		"declaration": false,
+		"module": "commonjs",
+		"noImplicitAny": true,
+		"outDir": "_build/",
+		"removeComments": false,
+		"sourceMap": true,
+		"target": "es5"
+	},
+	"filesGlob": [
+		"./typings/main.d.ts",
+		"./src/**/*.ts",
+		"./tests/**/*.ts"
+	],
+	"files": [
+		"./typings/main.d.ts",
+		"./src/commands/newApp.ts",
+		"./src/lib/cli.ts"
+	]
+}
