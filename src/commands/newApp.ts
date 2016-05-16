@@ -58,7 +58,7 @@ export const createNew = (name: string) => {
 	checkForEmptyDir(path.destination, true);
 
 	let appDetails = { name };
-	let questions = [
+	let questions: inquirer.Questions = [
 		{
 			type: 'list',
 			name: 'version',
@@ -73,9 +73,9 @@ export const createNew = (name: string) => {
 			type: 'checkbox',
 			name: 'modules',
 			message: 'Which modules would you like to use?',
-			choices: (answers: CreateAnswers) => {
+			choices: (answers: CreateAnswers): inquirer.ChoiceType[] => {
 				let chosenModules = availableModules[answers.version];
-				Object.keys(chosenModules).map((name) => {
+				return Object.keys(chosenModules).map((name) => {
 					return { name, checked: !!chosenModules[name].checked };
 				});
 			}
