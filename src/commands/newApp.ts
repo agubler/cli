@@ -73,9 +73,12 @@ export const createNew = (name: string) => {
 			type: 'checkbox',
 			name: 'modules',
 			message: 'Which modules would you like to use?',
-			choices: (answers: CreateAnswers) => Object.keys(availableModules[answers.version]).map((name) => {
-				return { name, checked: !!availableModules[answers.version][name].checked };
-			})
+			choices: (answers: CreateAnswers) => {
+				let chosenModules = availableModules[answers.version];
+				Object.keys(chosenModules).map((name) => {
+					return { name, checked: !!chosenModules[name].checked };
+				});
+			}
 		}
 	];
 
