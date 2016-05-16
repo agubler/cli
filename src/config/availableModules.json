@@ -1,77 +1,84 @@
 {
 	"stable": {
-		"dojo-widgets": {
-			"version": "@dojo/widgets",
-			"buildFromSource": true,
-			"peerDependencies": {
-				"@reactivex/rxjs": "5.0.0-beta.6",
-				"dojo-compose": ">=2.0.0-beta.2",
-				"dojo-core": ">=2.0.0-alpha.5",
-				"immutable": "^3.7.6",
-				"maquette": "^2.3.1"
+		"default": true,
+		"name": "Stable (recommended)",
+		"modules": {
+			"dojo-widgets": {
+				"version": "github:dojo/widgets",
+				"buildFromSource": true,
+				"peerDependencies": {
+					"@reactivex/rxjs": "5.0.0-beta.6",
+					"dojo-compose": ">=2.0.0-beta.2",
+					"dojo-core": ">=2.0.0-alpha.5",
+					"immutable": "^3.7.6",
+					"maquette": "^2.3.1"
+				}
+			},
+			"dojo-actions": {
+				"version": ">=2.0.0-alpha.1",
+				"peerDependencies": {
+					"dojo-core": ">=2.0.0-alpha.5",
+					"dojo-compose": ">=2.0.0-beta.2"
+				}
+			},
+			"dojo-compose": {
+				"version": ">=2.0.0-beta.2",
+				"peerDependencies": {
+					"dojo-core": ">=2.0.0-alpha.5"
+				}
+			},
+			"dojo-core": {
+				"version": ">=2.0.0-alpha.5",
+				"checked": true
+			},
+			"dojo-loader": {
+				"version": ">=2.0.0-beta.4",
+				"checked": true
 			}
-		},
-		"dojo-actions": {
-			"version": ">=2.0.0-alpha.1",
-			"peerDependencies": {
-				"dojo-core": ">=2.0.0-alpha.5",
-				"dojo-compose": ">=2.0.0-beta.2"
-			}
-		},
-		"dojo-compose": {
-			"version": ">=2.0.0-beta.2",
-			"peerDependencies": {
-				"dojo-core": ">=2.0.0-alpha.5"
-			}
-		},
-		"dojo-core": {
-			"version": ">=2.0.0-alpha.5",
-			"checked": true
-		},
-		"dojo-loader": {
-			"version": ">=2.0.0-beta.4",
-			"checked": true
 		}
 	},
 	"latest": {
-		"scaryModule": {
-			"version": "WOW"
-		},
-		"dojo-widgets": {
-			"version": "@dojo/widgets",
-			"buildFromSource": true,
-			"peerDependencies": {
-				"@reactivex/rxjs": "5.0.0-beta.6",
-				"dojo-compose": ">=2.0.0-beta.2",
-				"dojo-core": ">=2.0.0-alpha.5",
-				"immutable": "^3.7.6",
-				"maquette": "^2.3.1"
+		"name": "Latest - Here be dragons",
+		"modules": {
+			"scaryModule": {
+				"version": "WOW"
+			},
+			"dojo-widgets": {
+				"version": "github:dojo/widgets",
+				"buildFromSource": true,
+				"peerDependencies": {
+					"@reactivex/rxjs": "5.0.0-beta.6",
+					"dojo-compose": ">=2.0.0-beta.2",
+					"dojo-core": ">=2.0.0-alpha.5",
+					"immutable": "^3.7.6",
+					"maquette": "^2.3.1"
+				}
+			},
+			"dojo-actions": {
+				"version": "github:dojo/actions",
+				"buildFromSource": true,
+				"peerDependencies": {
+					"dojo-core": ">=2.0.0-alpha.5",
+					"dojo-compose": ">=2.0.0-beta.2"
+				}
+			},
+			"dojo-compose": {
+				"version": "github:dojo/compose",
+				"buildFromSource": true,
+				"peerDependencies": {
+					"dojo-core": ">=2.0.0-alpha.5"
+				}
+			},
+			"dojo-core": {
+				"version": "github:dojo/core",
+				"buildFromSource": true,
+				"checked": true
+			},
+			"dojo-loader": {
+				"version": "github:dojo/loader",
+				"buildFromSource": true,
+				"checked": true
 			}
-		},
-		"dojo-actions": {
-			"version": "@dojo/actions",
-			"buildFromSource": true,
-			"peerDependencies": {
-				"dojo-core": ">=2.0.0-alpha.5",
-				"dojo-compose": ">=2.0.0-beta.2"
-			}
-		},
-		"dojo-compose": {
-			"version": "@dojo/compose",
-			"buildFromSource": true,
-			"peerDependencies": {
-				"dojo-core": ">=2.0.0-alpha.5"
-			}
-		},
-		"dojo-core": {
-			"version": "@dojo/core",
-			"buildFromSource": true,
-			"checked": true
-		},
-		"dojo-loader": {
-			"version": "@dojo/loader",
-			"buildFromSource": true,
-			"checked": true
 		}
 	}
 }

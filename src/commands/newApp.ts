@@ -2,6 +2,8 @@ import * as chalk from 'chalk';
 import * as inquirer from 'inquirer';
 import { merge } from 'lodash';
 import { readdirSync } from 'fs';
+import { render } from  '../util/template';
+import { template, destination } from '../util/path';
 
 // Not a TS module
 const availableModules = require('../config/availableModules.json');
@@ -11,14 +13,9 @@ interface ProceedAnswers extends inquirer.Answers {
 }
 
 interface CreateAnswers extends inquirer.Answers {
-	version: 'stable' | 'latest';
+	version: string;
 	modules: string[];
 }
-
-const path = {
-	templates: __dirname + '/templates/',
-	destination: process.cwd() + '/'
-};
 
 const checkForAppName = (name: any): void => {
 	if (!name || name.length === 0) {
@@ -53,20 +50,26 @@ const proceedCheck = (name: string) => {
 	});
 };
 
+const renderFiles = function (appDetails: Object) {
+	render(template('_package.json'), destination('package.json'), appDetails);
+};
+
 export const createNew = (name: string) => {
 	checkForAppName(name);
-	checkForEmptyDir(path.destination, true);
+	checkForEmptyDir(destination(), true);
 
 	let appDetails = { name };
 	let questions: inquirer.Questions = [
 		{
 			type: 'list',
 			name: 'version',
-			message: 'Would you like the \"stable\" or \"latest\" verisons?',
-			choices: [
-				{ name: 'stable (recomended)', value: 'stable'},
-				{ name: 'latest (here be dragons)', value: 'latest'}
-			],
+			message: 'What configuration of Dojo modules would you like?',
+			choices: (): inquirer.ChoiceType[] => {
+				return Object.keys(availableModules).map((key) => {
+					let config = availableModules[key];
+					return { name: config.name, value: key };
+				});
+			},
 			default: 0
 		},
 		{
@@ -74,7 +77,7 @@ export const createNew = (name: string) => {
 			name: 'modules',
 			message: 'Which modules would you like to use?',
 			choices: (answers: CreateAnswers): inquirer.ChoiceType[] => {
-				let chosenModules = availableModules[answers.version];
+				let chosenModules = availableModules[answers.version].modules;
 				return Object.keys(chosenModules).map((name) => {
 					return { name, checked: !!chosenModules[name].checked };
 				});
@@ -89,5 +92,7 @@ export const createNew = (name: string) => {
 		.then((answers) => {
 			merge(appDetails, answers);
 			console.log(JSON.stringify(appDetails, null, '  '));
-		});
+			return appDetails;
+		})
+		.then(renderFiles);
 };

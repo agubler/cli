@@ -17,6 +17,8 @@
 	"files": [
 		"./typings/main.d.ts",
 		"./src/commands/newApp.ts",
-		"./src/lib/cli.ts"
+		"./src/lib/cli.ts",
+		"./src/util/path.ts",
+		"./src/util/template.ts"
 	]
 }

@@ -87,10 +87,10 @@ module.exports = function (grunt) {
 				src: [ 'README.md', 'LICENSE', 'package.json', 'bower.json', 'src/config' ],
 				dest: 'dist/'
 			},
-			staticConfigFiles: {
+			staticDevFiles: {
 				expand: true,
 				cwd: 'src',
-				src: [ 'config/*' ],
+				src: [ 'config/*', 'templates/*' ],
 				dest: '<%= devDirectory %>'
 			},
 			staticTestFiles: {
@@ -309,7 +309,7 @@ module.exports = function (grunt) {
 	grunt.registerTask('dev', [
 		'tslint',
 		'ts:dev',
-		'copy:staticConfigFiles',
+		'copy:staticDevFiles',
 		'copy:staticTestFiles',
 		'replace:addIstanbulIgnore',
 		'updateTsconfig'

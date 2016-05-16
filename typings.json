@@ -7,6 +7,7 @@
     "yargs": "github:Tomdye/npm-yargs#31572993bc4bddd99dae2321aa67f44eb1694b59"
   },
   "ambientDevDependencies": {
-    "node": "registry:dt/node#4.0.0+20160509154515"
+    "ejs": "registry:dt/ejs#0.0.0+20160317120654",
+    "node": "registry:dt/node#6.0.0+20160514165920"
   }
 }
