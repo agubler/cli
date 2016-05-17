@@ -1,6 +1,6 @@
 import * as chalk from 'chalk';
 import * as inquirer from 'inquirer';
-import { merge } from 'lodash';
+import { mixin } from 'dojo-core/lang';
 import { readdirSync } from 'fs';
 import { render } from  '../util/template';
 import { template, destination } from '../util/path';
@@ -90,7 +90,7 @@ export const createNew = (name: string) => {
 	proceedCheck(name)
 		.then(() => inquirer.prompt(questions))
 		.then((answers) => {
-			merge(appDetails, answers);
+			mixin(appDetails, answers);
 			console.log(JSON.stringify(appDetails, null, '  '));
 			return appDetails;
 		})

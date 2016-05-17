@@ -10,11 +10,13 @@
 		"target": "es5"
 	},
 	"filesGlob": [
+		"./typings/index.d.ts",
 		"./typings/main.d.ts",
 		"./src/**/*.ts",
 		"./tests/**/*.ts"
 	],
 	"files": [
+		"./typings/index.d.ts",
 		"./typings/main.d.ts",
 		"./src/commands/newApp.ts",
 		"./src/lib/cli.ts",

@@ -3,7 +3,6 @@
   "devDependencies": {
     "chalk": "registry:npm/chalk#1.0.0+20160211003958",
     "inquirer": "github:Tomdye/npm-inquirer#a65f7a95b96925a5c70497f671123606cba5bd85",
-    "lodash": "registry:npm/lodash#4.0.0+20160416211519",
     "yargs": "github:Tomdye/npm-yargs#31572993bc4bddd99dae2321aa67f44eb1694b59"
   },
   "ambientDevDependencies": {
