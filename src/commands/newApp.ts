@@ -1,6 +1,6 @@
 import * as chalk from 'chalk';
 import * as inquirer from 'inquirer';
-import { mixin } from 'dojo-core/lang';
+import Promise from 'dojo-core/Promise';
 import { readdirSync } from 'fs';
 import { render } from  '../util/template';
 import { template, destination } from '../util/path';
@@ -15,6 +15,22 @@ interface ProceedAnswers extends inquirer.Answers {
 interface CreateAnswers extends inquirer.Answers {
 	version: string;
 	modules: string[];
+	name: string;
+}
+
+interface AppConfig {
+	name: string;
+	modules: ModuleConfigMap;
+}
+
+interface ModuleConfig {
+	version: string;
+	buildFromSource?: boolean;
+	peerDependencies: Object;
+}
+
+interface ModuleConfigMap {
+	[ moduleId: string ]: ModuleConfig;
 }
 
 const checkForAppName = (name: any): void => {
@@ -50,15 +66,50 @@ const proceedCheck = (name: string) => {
 	});
 };
 
-const renderFiles = function (appDetails: Object) {
-	render(template('_package.json'), destination('package.json'), appDetails);
+const renderFiles = () => {
+	console.log(chalk.bold('\n-- Rendering Files --'));
+
+	return Promise.all([
+		render(template('_package.json'), destination('package.json'), appConfig)
+	]);
+};
+
+let appConfig: AppConfig;
+
+const createAppConfig = (answers: CreateAnswers) => {
+	console.log(chalk.bold('\n-- Creating AppConfig From Answers --'));
+	let modules: ModuleConfigMap = {};
+	const allVersionedModules: ModuleConfigMap = availableModules[answers.version].modules;
+
+	// Get just the module config we care about
+	Object.keys(allVersionedModules).forEach((moduleId) => {
+		if (answers.modules.indexOf(moduleId) > -1) {
+			modules[moduleId] = allVersionedModules[moduleId];
+		}
+	});
+
+	appConfig = {
+		name: answers.name,
+		modules
+	};
+};
+
+const getGithubModules = () => {
+	console.log(chalk.bold('\n-- Finding GitHub Modules --'));
+	const gitReg = /^github:/;
+
+	Object.keys(appConfig.modules).forEach((moduleId) => {
+		let moduleConfig = appConfig.modules[moduleId];
+		if (gitReg.test(moduleConfig.version)) {
+			console.log(chalk.yellow('Info: ') + `ModuleID: ${moduleId} Version: ${moduleConfig.version}`);
+		}
+	});
 };
 
 export const createNew = (name: string) => {
 	checkForAppName(name);
 	checkForEmptyDir(destination(), true);
 
-	let appDetails = { name };
 	let questions: inquirer.Questions = [
 		{
 			type: 'list',
@@ -85,14 +136,16 @@ export const createNew = (name: string) => {
 		}
 	];
 
-	console.log(chalk.bold('Lets get started\n'));
+	console.log(chalk.bold('-- Lets get started --\n'));
 
 	proceedCheck(name)
 		.then(() => inquirer.prompt(questions))
-		.then((answers) => {
-			mixin(appDetails, answers);
-			console.log(JSON.stringify(appDetails, null, '  '));
-			return appDetails;
+		.then((answers: CreateAnswers) => {
+			answers.name = name;
+			console.log(JSON.stringify(answers, null, '  '));
+			return answers;
 		})
+		.then(createAppConfig)
+		.then(getGithubModules)
 		.then(renderFiles);
 };
