@@ -11,13 +11,13 @@
 	},
 	"filesGlob": [
 		"./typings/index.d.ts",
-		"./typings/main.d.ts",
+		"./typings-dojo/index.d.ts",
 		"./src/**/*.ts",
 		"./tests/**/*.ts"
 	],
 	"files": [
 		"./typings/index.d.ts",
-		"./typings/main.d.ts",
+		"./typings-dojo/index.d.ts",
 		"./src/commands/newApp.ts",
 		"./src/lib/cli.ts",
 		"./src/util/path.ts",

@@ -1,12 +1,11 @@
 import * as chalk from 'chalk';
 import * as inquirer from 'inquirer';
 import Promise from 'dojo-core/Promise';
+// import request from 'dojo-core/request';
+// import * as mkdirp from 'mkdirp';
 import { readdirSync } from 'fs';
 import { render } from  '../util/template';
 import { template, destination } from '../util/path';
-
-// Not a TS module
-const availableModules = require('../config/availableModules.json');
 
 interface ProceedAnswers extends inquirer.Answers {
 	proceed: boolean;
@@ -32,6 +31,11 @@ interface ModuleConfig {
 interface ModuleConfigMap {
 	[ moduleId: string ]: ModuleConfig;
 }
+
+// Not a TS module
+const availableModules = require('../config/availableModules.json');
+let appConfig: AppConfig;
+const gitReg = /github:(\w*)\/(\w*)#?(\w*)?/;
 
 const checkForAppName = (name: any): void => {
 	if (!name || name.length === 0) {
@@ -74,8 +78,6 @@ const renderFiles = () => {
 	]);
 };
 
-let appConfig: AppConfig;
-
 const createAppConfig = (answers: CreateAnswers) => {
 	console.log(chalk.bold('\n-- Creating AppConfig From Answers --'));
 	let modules: ModuleConfigMap = {};
@@ -96,14 +98,20 @@ const createAppConfig = (answers: CreateAnswers) => {
 
 const getGithubModules = () => {
 	console.log(chalk.bold('\n-- Finding GitHub Modules --'));
-	const gitReg = /^github:/;
 
 	Object.keys(appConfig.modules).forEach((moduleId) => {
 		let moduleConfig = appConfig.modules[moduleId];
-		if (gitReg.test(moduleConfig.version)) {
-			console.log(chalk.yellow('Info: ') + `ModuleID: ${moduleId} Version: ${moduleConfig.version}`);
+		const match = moduleConfig.version.match(gitReg);
+		if (match) {
+			getGitModule(match[1], match[2], match[3]);
 		}
 	});
+};
+
+const getGitModule = (owner: string, repo: string, commit?: string) => {
+	console.log(chalk.yellow('Info: ') + `Owner: ${owner}, Repo: ${repo}, Commit: ${commit}`);
+	// https://github.com/dojo/loader/archive/master.zip
+
 };
 
 export const createNew = (name: string) => {
