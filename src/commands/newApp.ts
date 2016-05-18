@@ -1,12 +1,15 @@
 import * as chalk from 'chalk';
 import * as inquirer from 'inquirer';
 import Promise from 'dojo-core/Promise';
-// import request from 'dojo-core/request';
-// import * as mkdirp from 'mkdirp';
-import { readdirSync, createWriteStream } from 'fs';
+import * as mkdirp from 'mkdirp';
+import { readdirSync } from 'fs';
 import * as got from 'got';
 import { render } from  '../util/template';
 import { template, destination } from '../util/path';
+
+// Not a TS module
+const availableModules = require('../config/availableModules.json');
+const unzip = require('unzip');
 
 interface ProceedAnswers extends inquirer.Answers {
 	proceed: boolean;
@@ -33,8 +36,6 @@ interface ModuleConfigMap {
 	[ moduleId: string ]: ModuleConfig;
 }
 
-// Not a TS module
-const availableModules = require('../config/availableModules.json');
 let appConfig: AppConfig;
 const gitReg = /github:(\w*)\/(\w*)#?(\w*)?/;
 
@@ -99,22 +100,35 @@ const createAppConfig = (answers: CreateAnswers) => {
 
 const getGithubModules = () => {
 	console.log(chalk.bold('\n-- Finding GitHub Modules --'));
+	let getGitPromises: Promise<void>[] = [];
 
 	Object.keys(appConfig.modules).forEach((moduleId) => {
 		let moduleConfig = appConfig.modules[moduleId];
 		const match = moduleConfig.version.match(gitReg);
 		if (match) {
-			getGitModule(match[1], match[2], match[3]);
+			getGitPromises.push(getGitModule(match[1], match[2], match[3]));
 		}
 	});
+
+	return Promise.all(getGitPromises);
 };
 
-const getGitModule = (owner: string, repo: string, commit?: string) => {
-	console.log(chalk.yellow('Info: ') + `Owner: ${owner}, Repo: ${repo}, Commit: ${commit}`);
-	// https://github.com/dojo/loader/archive/master.zip
+const getGitModule = (owner: string, repo: string, commit: string = 'master'): Promise<void> => {
+	return new Promise<void>((resolve, reject) => {
+		const gitPath = `https://github.com/${owner}/${repo}/archive/${commit}.zip`;
+		const destPath = destination(`_temp/github/${owner}`);
 
-	got.stream('todomvc.com').pipe(createWriteStream('index.html'));
-	// request('http://google.com/doodle.png').pipe(fs.createWriteStream('doodle.png'))
+		console.log(chalk.yellow('Info: ') + `Getting ${gitPath}`);
+
+		mkdirp.sync(destPath);
+
+		got.stream(gitPath)
+			.pipe(unzip.Extract({ path: destPath }))
+			.on('close', () => {
+				console.log(chalk.yellow('Info: ') + `Written ${destPath}`);
+				resolve();
+			});
+	});
 };
 
 export const createNew = (name: string) => {
