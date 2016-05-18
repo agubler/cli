@@ -3,7 +3,8 @@ import * as inquirer from 'inquirer';
 import Promise from 'dojo-core/Promise';
 // import request from 'dojo-core/request';
 // import * as mkdirp from 'mkdirp';
-import { readdirSync } from 'fs';
+import { readdirSync, createWriteStream } from 'fs';
+import * as got from 'got';
 import { render } from  '../util/template';
 import { template, destination } from '../util/path';
 
@@ -112,6 +113,8 @@ const getGitModule = (owner: string, repo: string, commit?: string) => {
 	console.log(chalk.yellow('Info: ') + `Owner: ${owner}, Repo: ${repo}, Commit: ${commit}`);
 	// https://github.com/dojo/loader/archive/master.zip
 
+	got.stream('todomvc.com').pipe(createWriteStream('index.html'));
+	// request('http://google.com/doodle.png').pipe(fs.createWriteStream('doodle.png'))
 };
 
 export const createNew = (name: string) => {
