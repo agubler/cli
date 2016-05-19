@@ -20,6 +20,7 @@
 		"./typings-dojo/index.d.ts",
 		"./src/commands/newApp.ts",
 		"./src/lib/cli.ts",
+		"./src/util/getGitModule.ts",
 		"./src/util/path.ts",
 		"./src/util/template.ts"
 	]

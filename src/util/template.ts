@@ -5,7 +5,7 @@ import Promise from 'dojo-core/Promise';
 
 export const render = function (source: string, destination: string, replacements: Object): Promise<void> {
 	return new Promise<void>((resolve, reject) => {
-		console.log(chalk.yellow('Info: ') + `rendering ${destination}`);
+		console.log(chalk.yellow('Rendering: ') + `rendering ${destination}`);
 		renderFile(source, replacements, (err: Error, str: string) => {
 			if (err) {
 				console.log(chalk.red('Error: ') + err);

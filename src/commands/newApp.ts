@@ -1,17 +1,13 @@
 import * as chalk from 'chalk';
 import * as inquirer from 'inquirer';
 import Promise from 'dojo-core/Promise';
-import * as mkdirp from 'mkdirp';
-import { readdirSync, createReadStream } from 'fs';
-import * as got from 'got';
+import { readdirSync } from 'fs';
 import { render } from  '../util/template';
-import { template, destination, temp } from '../util/path';
+import { template, destination } from '../util/path';
+import getGitModule from '../util/getGitModule';
 
 // Not a TS module
 const availableModules = require('../config/availableModules.json');
-const unzip = require('unzip');
-const fstream = require('fstream');
-const ProgressBar = require('progress');
 
 interface ProceedAnswers extends inquirer.Answers {
 	proceed: boolean;
@@ -101,7 +97,7 @@ const createAppConfig = (answers: CreateAnswers) => {
 };
 
 const getGithubModules = () => {
-	console.log(chalk.bold('\n-- Finding GitHub Modules --'));
+	console.log(chalk.bold('\n-- Downloading GitHub Modules --'));
 	let getGitPromises: Promise<void>[] = [];
 
 	Object.keys(appConfig.modules).forEach((moduleId) => {
@@ -113,45 +109,6 @@ const getGithubModules = () => {
 	});
 
 	return Promise.all(getGitPromises);
-};
-
-const getGitModule = (owner: string, repo: string, commit: string = 'master'): Promise<void> => {
-	return new Promise<void>((resolve, reject) => {
-		const gitPath = `https://github.com/${owner}/${repo}/archive/${commit}.zip`;
-		const destPath = temp(`github/${owner}/`);
-		const archivePath = destPath + '_archive/';
-		const destArchive = archivePath + `${repo}-${commit}.zip`;
-		let bar: any;
-
-		mkdirp.sync(destPath);
-		mkdirp.sync(archivePath);
-
-		got.stream(gitPath)
-			.on('response', function(res: any) {
-				bar = new ProgressBar(`downloading ${gitPath} [:bar] :percent :etas`, {
-					complete: '=',
-					incomplete: ' ',
-					width: 40,
-					total: parseInt(res.headers['content-length'], 10)
-				});
-			})
-			.on('data', function (chunk: any) {
-				bar.tick(chunk.length);
-			})
-			.pipe(fstream.Writer(destArchive))
-			.on('close', () => {
-				let readStream = createReadStream(destArchive);
-				let writeStream = fstream.Writer(destPath);
-
-				readStream
-					.pipe(unzip.Parse())
-					.pipe(writeStream)
-					.on('close', () => {
-						console.log(chalk.yellow('Info: ') + `Written ${destPath}`);
-						resolve();
-					});
-			});
-	});
 };
 
 export const createNew = (name: string) => {

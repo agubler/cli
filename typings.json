@@ -3,8 +3,7 @@
     "chalk": "registry:npm/chalk#1.0.0+20160211003958",
     "inquirer": "github:Tomdye/npm-inquirer#a65f7a95b96925a5c70497f671123606cba5bd85",
     "mkdirp": "registry:npm/mkdirp#0.5.0+20160222053049",
-    "yargs": "github:Tomdye/npm-yargs#31572993bc4bddd99dae2321aa67f44eb1694b59",
-	"got": "github:Tomdye/npm-got#fdee96bc55c25a6e8b2cd399f7b756197307e88f"
+    "yargs": "github:Tomdye/npm-yargs#31572993bc4bddd99dae2321aa67f44eb1694b59"
   },
   "globalDependencies": {
     "ejs": "registry:dt/ejs#0.0.0+20160317120654",
