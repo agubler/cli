@@ -2,7 +2,7 @@ import * as chalk from 'chalk';
 import * as inquirer from 'inquirer';
 import Promise from 'dojo-core/Promise';
 import * as mkdirp from 'mkdirp';
-import { readdirSync } from 'fs';
+import { readdirSync, createReadStream } from 'fs';
 import * as got from 'got';
 import { render } from  '../util/template';
 import { template, destination } from '../util/path';
@@ -10,6 +10,8 @@ import { template, destination } from '../util/path';
 // Not a TS module
 const availableModules = require('../config/availableModules.json');
 const unzip = require('unzip');
+const fstream = require('fstream');
+const ProgressBar = require('progress');
 
 interface ProceedAnswers extends inquirer.Answers {
 	proceed: boolean;
@@ -117,17 +119,45 @@ const getGitModule = (owner: string, repo: string, commit: string = 'master'): P
 	return new Promise<void>((resolve, reject) => {
 		const gitPath = `https://github.com/${owner}/${repo}/archive/${commit}.zip`;
 		const destPath = destination(`_temp/github/${owner}`);
+		const destArchive = destPath + `archives/${repo}-${commit}.zip`;
+		let bar: any;
 
-		console.log(chalk.yellow('Info: ') + `Getting ${gitPath}`);
+		// console.log(chalk.yellow('Info: ') + `Getting ${gitPath}`);
 
 		mkdirp.sync(destPath);
 
 		got.stream(gitPath)
-			.pipe(unzip.Extract({ path: destPath }))
+			.on('response', function(res: any) {
+				bar = new ProgressBar(`downloading ${gitPath} [:bar] :percent :etas`, {
+					complete: '=',
+					incomplete: ' ',
+					width: 40,
+					total: parseInt(res.headers['content-length'], 10)
+				});
+			})
+			.on('data', function (chunk: any) {
+				bar.tick(chunk.length);
+			})
+			.pipe(fstream.Writer(destArchive))
 			.on('close', () => {
-				console.log(chalk.yellow('Info: ') + `Written ${destPath}`);
-				resolve();
+				let readStream = createReadStream(destArchive);
+				let writeStream = fstream.Writer(destPath);
+
+				console.log(`Unpacking ${destArchive}`);
+
+				readStream
+					.pipe(unzip.Parse())
+					.pipe(writeStream);
 			});
+
+			// .pipe(unzip.Parse())
+			// .pipe(fstream.Writer(destPath));
+
+			// .pipe(unzip.Extract({ path: destPath }))
+			// .on('close', () => {
+			// 	console.log(chalk.yellow('Info: ') + `Written ${destPath}`);
+			// 	resolve();
+			// });
 	});
 };
 
