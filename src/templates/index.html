@@ -4,13 +4,10 @@
 	<link rel="stylesheet" type="text/css" href="./app.css">
 	<title><%= name %></title>
 </head>
-<body class="">
-	<% if (modules['dojo-loader']) { %>
+<body class=""> <% if (modules['dojo-loader']) { %>
 	<!-- Loading the dojo-loader (minified) -->
-	<script src="../../node_modules/dojo-loader/loader.min.js"></script>
-	<% }  else { %>
-	<!-- You will need to import an AMD capable loader: dojo-loader, requireJS etc -->
-	<% } %>
+	<script src="../../node_modules/dojo-loader/loader.min.js"></script> <% }  else { %>
+	<!-- You will need to import an AMD capable loader: dojo-loader, requireJS etc --> 	<% } %>
 
 	<!-- Loading the rest of the environment -->
 	<script src="./index.js"></script>
