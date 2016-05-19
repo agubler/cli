@@ -3,15 +3,30 @@
 		"default": true,
 		"name": "Stable (recommended)",
 		"modules": {
+			"@reactivex/rxjs": {
+				"version": "5.0.0-beta.6",
+				"packageLocation": "/dist/amd",
+				"packageName": "rxjs"
+			},
 			"dojo-widgets": {
 				"version": "github:dojo/widgets",
 				"buildFromSource": true,
 				"peerDependencies": {
-					"@reactivex/rxjs": "5.0.0-beta.6",
 					"dojo-compose": ">=2.0.0-beta.2",
 					"dojo-core": ">=2.0.0-alpha.5",
-					"immutable": "^3.7.6",
-					"maquette": "^2.3.1"
+					"immutable": {
+						"version": "^3.7.6",
+						"packageLocation": "/dist"
+					},
+					"maquette": {
+						"version": "^2.3.1",
+						"packageLocation": "/dist"
+					},
+					"@reactivex/rxjs": {
+						"version": "5.0.0-beta.6",
+						"packageLocation": "/dist/amd",
+						"packageName": "rxjs"
+					}
 				}
 			},
 			"dojo-actions": {
@@ -47,11 +62,21 @@
 				"version": "github:dojo/widgets",
 				"buildFromSource": true,
 				"peerDependencies": {
-					"@reactivex/rxjs": "5.0.0-beta.6",
 					"dojo-compose": ">=2.0.0-beta.2",
 					"dojo-core": ">=2.0.0-alpha.5",
-					"immutable": "^3.7.6",
-					"maquette": "^2.3.1"
+					"immutable": {
+						"version": "^3.7.6",
+						"packageLocation": "/dist"
+					},
+					"maquette": {
+						"version": "^2.3.1",
+						"packageLocation": "/dist"
+					},
+					"@reactivex/rxjs": {
+						"version": "5.0.0-beta.6",
+						"packageLocation": "/dist/amd",
+						"packageName": "rxjs"
+					}
 				}
 			},
 			"dojo-actions": {

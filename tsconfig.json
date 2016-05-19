@@ -12,16 +12,18 @@
 	"filesGlob": [
 		"./typings/index.d.ts",
 		"./typings-dojo/index.d.ts",
-		"./src/**/*.ts",
+		"./src/commands/*.ts",
+		"./src/util/*.ts",
+		"./src/lib/*.ts",
 		"./tests/**/*.ts"
 	],
 	"files": [
 		"./typings/index.d.ts",
 		"./typings-dojo/index.d.ts",
 		"./src/commands/newApp.ts",
-		"./src/lib/cli.ts",
 		"./src/util/getGitModule.ts",
 		"./src/util/path.ts",
-		"./src/util/template.ts"
+		"./src/util/template.ts",
+		"./src/lib/cli.ts"
 	]
 }

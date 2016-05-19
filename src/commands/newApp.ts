@@ -3,7 +3,7 @@ import * as inquirer from 'inquirer';
 import Promise from 'dojo-core/Promise';
 import { readdirSync } from 'fs';
 import { render } from  '../util/template';
-import { template, destination } from '../util/path';
+import { template, destinationRoot, destinationSrc } from '../util/path';
 import getGitModule from '../util/getGitModule';
 
 // Not a TS module
@@ -74,7 +74,11 @@ const renderFiles = () => {
 	console.log(chalk.bold('\n-- Rendering Files --'));
 
 	return Promise.all([
-		render(template('_package.json'), destination('package.json'), appConfig)
+		render(template('_package.json'), destinationRoot('package.json'), appConfig),
+		render(template('index.html'), destinationSrc('index.html'), appConfig),
+		render(template('index.ts'), destinationSrc('index.ts'), appConfig),
+		render(template('app.ts'), destinationSrc('app.ts'), appConfig),
+		render(template('app.styl'), destinationSrc('app.styl'), appConfig)
 	]);
 };
 
@@ -113,7 +117,7 @@ const getGithubModules = () => {
 
 export const createNew = (name: string) => {
 	checkForAppName(name);
-	checkForEmptyDir(destination(), true);
+	checkForEmptyDir(destinationRoot(), true);
 
 	let questions: inquirer.Questions = [
 		{
