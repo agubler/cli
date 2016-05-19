@@ -5,7 +5,7 @@ import * as mkdirp from 'mkdirp';
 import { readdirSync, createReadStream } from 'fs';
 import * as got from 'got';
 import { render } from  '../util/template';
-import { template, destination } from '../util/path';
+import { template, destination, temp } from '../util/path';
 
 // Not a TS module
 const availableModules = require('../config/availableModules.json');
@@ -118,11 +118,13 @@ const getGithubModules = () => {
 const getGitModule = (owner: string, repo: string, commit: string = 'master'): Promise<void> => {
 	return new Promise<void>((resolve, reject) => {
 		const gitPath = `https://github.com/${owner}/${repo}/archive/${commit}.zip`;
-		const destPath = destination(`_temp/github/${owner}`);
-		const destArchive = destPath + `${repo}-${commit}.zip`;
+		const destPath = temp(`github/${owner}/`);
+		const archivePath = destPath + '_archive/';
+		const destArchive = archivePath + `${repo}-${commit}.zip`;
 		let bar: any;
 
 		mkdirp.sync(destPath);
+		mkdirp.sync(archivePath);
 
 		got.stream(gitPath)
 			.on('response', function(res: any) {
