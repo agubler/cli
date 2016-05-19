@@ -119,10 +119,8 @@ const getGitModule = (owner: string, repo: string, commit: string = 'master'): P
 	return new Promise<void>((resolve, reject) => {
 		const gitPath = `https://github.com/${owner}/${repo}/archive/${commit}.zip`;
 		const destPath = destination(`_temp/github/${owner}`);
-		const destArchive = destPath + `archives/${repo}-${commit}.zip`;
+		const destArchive = destPath + `${repo}-${commit}.zip`;
 		let bar: any;
-
-		// console.log(chalk.yellow('Info: ') + `Getting ${gitPath}`);
 
 		mkdirp.sync(destPath);
 
@@ -143,21 +141,14 @@ const getGitModule = (owner: string, repo: string, commit: string = 'master'): P
 				let readStream = createReadStream(destArchive);
 				let writeStream = fstream.Writer(destPath);
 
-				console.log(`Unpacking ${destArchive}`);
-
 				readStream
 					.pipe(unzip.Parse())
-					.pipe(writeStream);
+					.pipe(writeStream)
+					.on('close', () => {
+						console.log(chalk.yellow('Info: ') + `Written ${destPath}`);
+						resolve();
+					});
 			});
-
-			// .pipe(unzip.Parse())
-			// .pipe(fstream.Writer(destPath));
-
-			// .pipe(unzip.Extract({ path: destPath }))
-			// .on('close', () => {
-			// 	console.log(chalk.yellow('Info: ') + `Written ${destPath}`);
-			// 	resolve();
-			// });
 	});
 };
 
