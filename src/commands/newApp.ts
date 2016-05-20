@@ -27,11 +27,13 @@ interface CreateAnswers extends inquirer.Answers {
 	version: string;
 	modules: string[];
 	name: string;
+	description: string;
 }
 
 interface AppConfig {
 	name: string;
 	modules: ModuleConfigMap;
+	description: string;
 }
 
 interface ModuleConfig {
@@ -109,6 +111,7 @@ const createAppConfig = (answers: CreateAnswers) => {
 
 	appConfig = {
 		name: answers.name,
+		description: answers.description,
 		modules
 	};
 };
