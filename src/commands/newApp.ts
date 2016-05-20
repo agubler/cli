@@ -3,11 +3,21 @@ import * as inquirer from 'inquirer';
 import Promise from 'dojo-core/Promise';
 import { readdirSync } from 'fs';
 import { render } from  '../util/template';
-import { template, destinationRoot, destinationSrc } from '../util/path';
+import { template, destinationRoot, destinationSrc, nodeModules } from '../util/path';
 import getGitModule from '../util/getGitModule';
 
 // Not a TS module
 const availableModules = require('../config/availableModules.json');
+const spawn = require('cross-spawn');
+const ncp = require('ncp').ncp;
+
+const skip = {
+	getGithubModules: false,
+	installDependencies: false,
+	renderFiles: false
+};
+
+ncp.limit = 16;
 
 interface ProceedAnswers extends inquirer.Answers {
 	proceed: boolean;
@@ -71,6 +81,8 @@ const proceedCheck = (name: string) => {
 };
 
 const renderFiles = () => {
+	if (skip.renderFiles) { return; }
+
 	console.log(chalk.bold('\n-- Rendering Files --'));
 
 	return Promise.all([
@@ -101,6 +113,8 @@ const createAppConfig = (answers: CreateAnswers) => {
 };
 
 const getGithubModules = () => {
+	if (skip.getGithubModules) { return; }
+
 	console.log(chalk.bold('\n-- Downloading GitHub Modules --'));
 	let getGitPromises: Promise<void>[] = [];
 
@@ -108,11 +122,34 @@ const getGithubModules = () => {
 		let moduleConfig = appConfig.modules[moduleId];
 		const match = moduleConfig.version.match(gitReg);
 		if (match) {
-			getGitPromises.push(getGitModule(match[1], match[2], match[3]));
+			getGitPromises.push(
+				getGitModule(match[1], match[2], match[3]).then((path: string) => {
+					return new Promise<void>((resolve, reject) => {
+						const nodeModulesDestination = nodeModules(moduleId);
+						ncp(path, nodeModulesDestination, function (err: Error) {
+							if (err) {
+								console.error(err);
+								reject();
+							}
+							console.log(chalk.green('Moved to: ') + nodeModulesDestination);
+							resolve();
+						});
+					});
+				})
+			);
 		}
 	});
 
 	return Promise.all(getGitPromises);
+};
+
+const installDependencies = () => {
+	if (skip.installDependencies) { return; }
+
+	let taskName = chalk.italic('npm install');
+	console.log(chalk.bold('\n-- Running ' + taskName));
+	let child = spawn('npm', ['install'], { stdio: 'inherit' });
+	return child;
 };
 
 export const createNew = (name: string) => {
@@ -156,5 +193,6 @@ export const createNew = (name: string) => {
 		})
 		.then(createAppConfig)
 		.then(getGithubModules)
-		.then(renderFiles);
+		.then(renderFiles)
+		.then(installDependencies);
 };

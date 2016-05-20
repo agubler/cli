@@ -10,8 +10,10 @@
   "repository": {
     "type": "git"
   },
-  "dependencies": { <% for (moduleId in modules) { var module = modules[moduleId];%>
-	  "<%- moduleId %>": "<%- module.version %>",<% } %>
+  "dependencies": { <% var keys = Object.keys(modules);
+  	keys.forEach(function (key, index) {
+	  var module = modules[key];%>
+	  "<%- key %>": "<%- module.version %>"<% if (index < keys.length -1) { %>,<% } }) %>
   },
   "devDependencies": {
     "codecov.io": "0.1.6",
