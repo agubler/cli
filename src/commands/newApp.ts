@@ -87,6 +87,7 @@ const renderFiles = () => {
 
 	return Promise.all([
 		render(template('_package.json'), destinationRoot('package.json'), appConfig),
+		render(template('_Gruntfile.js'), destinationRoot('Gruntfile.js'), appConfig),
 		render(template('index.html'), destinationSrc('index.html'), appConfig),
 		render(template('index.ts'), destinationSrc('index.ts'), appConfig),
 		render(template('app.ts'), destinationSrc('app.ts'), appConfig),
@@ -157,6 +158,11 @@ export const createNew = (name: string) => {
 	checkForEmptyDir(destinationRoot(), true);
 
 	let questions: inquirer.Questions = [
+		{
+			type: 'text',
+			name: 'description',
+			message: 'Enter a brief description of the app you are creating'
+		},
 		{
 			type: 'list',
 			name: 'version',
