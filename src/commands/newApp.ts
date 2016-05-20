@@ -11,12 +11,6 @@ const availableModules = require('../config/availableModules.json');
 const spawn = require('cross-spawn');
 const ncp = require('ncp').ncp;
 
-const skip = {
-	getGithubModules: false,
-	installDependencies: false,
-	renderFiles: false
-};
-
 ncp.limit = 16;
 
 interface ProceedAnswers extends inquirer.Answers {
@@ -46,7 +40,15 @@ interface ModuleConfigMap {
 	[ moduleId: string ]: ModuleConfig;
 }
 
+interface SkipConfig {
+	npm: boolean;
+	git: boolean;
+	render: boolean;
+}
+
 let appConfig: AppConfig;
+let skip: SkipConfig;
+
 const gitReg = /github:(\w*)\/(\w*)#?(\w*)?/;
 
 const checkForAppName = (name: any): void => {
@@ -83,13 +85,16 @@ const proceedCheck = (name: string) => {
 };
 
 const renderFiles = () => {
-	if (skip.renderFiles) { return; }
+	if (skip.render) { return; }
 
 	console.log(chalk.bold('\n-- Rendering Files --'));
 
 	return Promise.all([
 		render(template('_package.json'), destinationRoot('package.json'), appConfig),
 		render(template('_Gruntfile.js'), destinationRoot('Gruntfile.js'), appConfig),
+		render(template('tsconfig.json'), destinationRoot('tsconfig.json'), appConfig),
+		render(template('tslint.json'), destinationRoot('tslint.json'), appConfig),
+		render(template('.editorconfig'), destinationRoot('.editorconfig'), appConfig),
 		render(template('index.html'), destinationSrc('index.html'), appConfig),
 		render(template('index.ts'), destinationSrc('index.ts'), appConfig),
 		render(template('app.ts'), destinationSrc('app.ts'), appConfig),
@@ -117,7 +122,7 @@ const createAppConfig = (answers: CreateAnswers) => {
 };
 
 const getGithubModules = () => {
-	if (skip.getGithubModules) { return; }
+	if (skip.git) { return; }
 
 	console.log(chalk.bold('\n-- Downloading GitHub Modules --'));
 	let getGitPromises: Promise<void>[] = [];
@@ -148,7 +153,7 @@ const getGithubModules = () => {
 };
 
 const installDependencies = () => {
-	if (skip.installDependencies) { return; }
+	if (skip.npm) { return; }
 
 	let taskName = chalk.italic('npm install');
 	console.log(chalk.bold('\n-- Running ' + taskName));
@@ -156,7 +161,9 @@ const installDependencies = () => {
 	return child;
 };
 
-export const createNew = (name: string) => {
+export const createNew = (name: string, skipConfig: SkipConfig) => {
+	skip = skipConfig;
+
 	checkForAppName(name);
 	checkForEmptyDir(destinationRoot(), true);
 
