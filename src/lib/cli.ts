@@ -6,6 +6,7 @@ interface NewAppArgs extends yargs.Argv {
 	skipNpm: boolean;
 	skipGit: boolean;
 	skipRender: boolean;
+	force: boolean;
 }
 
 function noop() {};
@@ -21,7 +22,8 @@ yargs
 			createNew(argv.appName, {
 				npm: argv.skipNpm,
 				git: argv.skipGit,
-				render: argv.skipRender
+				render: argv.skipRender,
+				force: argv.force
 			});
 		}
 	)
@@ -41,6 +43,12 @@ yargs
 		'skipRender': {
 			alias: 'sr',
 			describe: 'Skip render files'
+		}
+	})
+	.options({
+		'force': {
+			alias: 'f',
+			describe: 'Force usage in non-empty directory'
 		}
 	})
 	.help()

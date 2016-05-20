@@ -44,6 +44,7 @@ interface SkipConfig {
 	npm: boolean;
 	git: boolean;
 	render: boolean;
+	force: boolean;
 }
 
 let appConfig: AppConfig;
@@ -165,7 +166,10 @@ export const createNew = (name: string, skipConfig: SkipConfig) => {
 	skip = skipConfig;
 
 	checkForAppName(name);
-	checkForEmptyDir(destinationRoot(), true);
+
+	if (!skip.force) {
+		checkForEmptyDir(destinationRoot(), true);
+	}
 
 	let questions: inquirer.Questions = [
 		{
