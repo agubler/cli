@@ -12,8 +12,12 @@
 				"version": "github:dojo/widgets",
 				"buildFromSource": true,
 				"peerDependencies": {
-					"dojo-compose": ">=2.0.0-beta.2",
-					"dojo-core": ">=2.0.0-alpha.5",
+					"dojo-compose": {
+						"version": ">=2.0.0-beta.2"
+					},
+					"dojo-core": {
+						"version": ">=2.0.0-alpha.5"
+					},
 					"immutable": {
 						"version": "^3.7.6",
 						"packageLocation": "/dist"
@@ -32,14 +36,20 @@
 			"dojo-actions": {
 				"version": ">=2.0.0-alpha.1",
 				"peerDependencies": {
-					"dojo-core": ">=2.0.0-alpha.5",
-					"dojo-compose": ">=2.0.0-beta.2"
+					"dojo-compose": {
+						"version": ">=2.0.0-beta.2"
+					},
+					"dojo-core": {
+						"version": ">=2.0.0-alpha.5"
+					}
 				}
 			},
 			"dojo-compose": {
 				"version": ">=2.0.0-beta.2",
 				"peerDependencies": {
-					"dojo-core": ">=2.0.0-alpha.5"
+					"dojo-core": {
+						"version": ">=2.0.0-alpha.5"
+					}
 				}
 			},
 			"dojo-core": {
@@ -55,15 +65,16 @@
 	"latest": {
 		"name": "Latest - Here be dragons",
 		"modules": {
-			"scaryModule": {
-				"version": "WOW"
-			},
 			"dojo-widgets": {
 				"version": "github:dojo/widgets",
 				"buildFromSource": true,
 				"peerDependencies": {
-					"dojo-compose": ">=2.0.0-beta.2",
-					"dojo-core": ">=2.0.0-alpha.5",
+					"dojo-compose": {
+						"version": ">=2.0.0-beta.2"
+					},
+					"dojo-core": {
+						"version": ">=2.0.0-alpha.5"
+					},
 					"immutable": {
 						"version": "^3.7.6",
 						"packageLocation": "/dist"
@@ -83,15 +94,21 @@
 				"version": "github:dojo/actions",
 				"buildFromSource": true,
 				"peerDependencies": {
-					"dojo-core": ">=2.0.0-alpha.5",
-					"dojo-compose": ">=2.0.0-beta.2"
+					"dojo-compose": {
+						"version": ">=2.0.0-beta.2"
+					},
+					"dojo-core": {
+						"version": ">=2.0.0-alpha.5"
+					}
 				}
 			},
 			"dojo-compose": {
 				"version": "github:dojo/compose",
 				"buildFromSource": true,
 				"peerDependencies": {
-					"dojo-core": ">=2.0.0-alpha.5"
+					"dojo-core": {
+						"version": ">=2.0.0-alpha.5"
+					}
 				}
 			},
 			"dojo-core": {

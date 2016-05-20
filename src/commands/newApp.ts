@@ -33,7 +33,7 @@ interface AppConfig {
 interface ModuleConfig {
 	version: string;
 	buildFromSource?: boolean;
-	peerDependencies: Object;
+	peerDependencies: ModuleConfigMap;
 }
 
 interface ModuleConfigMap {
@@ -114,6 +114,26 @@ const createAppConfig = (answers: CreateAnswers) => {
 			modules[moduleId] = allVersionedModules[moduleId];
 		}
 	});
+
+	// Upgrade peerDependencies to top-level
+	for (let moduleId in modules) {
+		const module = modules[moduleId];
+		const modulePeerDeps = module.peerDependencies;
+
+		if (modulePeerDeps) {
+			const currentDependencies = Object.keys(modules);
+			for (let peerDepId in modulePeerDeps) {
+				const peerDep = modulePeerDeps[peerDepId];
+				if (currentDependencies.indexOf(peerDepId) > -1) {
+					// TODO: Resolve Dependencies
+					console.log(chalk.yellow('Dependency Issue: ') + `Module: ${moduleId} requires PeerDependency of ${peerDepId} but conflict found`);
+				} else {
+					console.log(chalk.green('Dependency Added: ') + `Module: ${moduleId} required PeerDependency of ${peerDepId}`);
+					modules[peerDepId] = peerDep;
+				}
+			}
+		}
+	}
 
 	appConfig = {
 		name: answers.name,

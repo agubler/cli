@@ -34,7 +34,7 @@ yargs
 		}
 	})
 	.options({
-		'skipGithub': {
+		'skipGit': {
 			alias: 'sg',
 			describe: 'Skip github install'
 		}
