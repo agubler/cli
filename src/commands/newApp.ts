@@ -95,7 +95,7 @@ const renderFiles = () => {
 		render(template('_Gruntfile.js'), destinationRoot('Gruntfile.js'), appConfig),
 		render(template('tsconfig.json'), destinationRoot('tsconfig.json'), appConfig),
 		render(template('tslint.json'), destinationRoot('tslint.json'), appConfig),
-		render(template('.editorconfig'), destinationRoot('.editorconfig'), appConfig),
+		render(template('_editorconfig'), destinationRoot('.editorconfig'), appConfig),
 		render(template('index.html'), destinationSrc('index.html'), appConfig),
 		render(template('index.ts'), destinationSrc('index.ts'), appConfig),
 		render(template('app.ts'), destinationSrc('app.ts'), appConfig),
