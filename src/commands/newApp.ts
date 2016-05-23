@@ -4,8 +4,8 @@ import Promise from 'dojo-core/Promise';
 import { readdirSync } from 'fs';
 import { render } from  '../util/template';
 import { template, destinationRoot, destinationSrc, nodeModules } from '../util/path';
-import getGitModule from '../util/getGitModule';
-import { satisfies } from 'semver';
+import { get as getGitModule, build as buildGitModule } from '../util/gitModule';
+// import { satisfies } from 'semver';
 
 // Not a TS module
 const availableModules = require('../config/availableModules.json');
@@ -34,7 +34,7 @@ interface AppConfig {
 interface ModuleConfig {
 	version: string;
 	buildFromSource?: boolean;
-	peerDependencies: ModuleConfigMap;
+	peerDependencies?: ModuleConfigMap;
 }
 
 interface ModuleConfigMap {
@@ -126,15 +126,11 @@ const createAppConfig = (answers: CreateAnswers) => {
 			for (let peerDepId in modulePeerDeps) {
 				const peerDep = modulePeerDeps[peerDepId];
 				if (currentDependencies.indexOf(peerDepId) > -1) {
-					const depSatisfied = satisfies(modules[peerDepId].version, peerDep.version);
-					// Raise error if deps not satisfiable by selection
-					// of if version already loaded and peerDep requires
-					// github built from source version.
-					if (!depSatisfied || gitReg.test(peerDep.version)) {
+					if (modules[peerDepId].version !== peerDep.version || gitReg.test(peerDep.version)) {
 						console.log(chalk.red('Dependency Error: ') + `Module: ${moduleId} requires PeerDependency of ${peerDepId} but conflict found`);
 					}
 				} else {
-					console.log(chalk.green('Dependency Added: ') + `Module: ${moduleId} required PeerDependency of ${peerDepId}`);
+					console.log(chalk.green('Dependency Added: ') + `Module: ${moduleId} requires PeerDependency of ${peerDepId}`);
 					modules[peerDepId] = peerDep;
 				}
 			}
@@ -159,19 +155,22 @@ const getGithubModules = () => {
 		const match = moduleConfig.version.match(gitReg);
 		if (match) {
 			getGitPromises.push(
-				getGitModule(match[1], match[2], match[3]).then((path: string) => {
-					return new Promise<void>((resolve, reject) => {
-						const nodeModulesDestination = nodeModules(moduleId);
-						ncp(path, nodeModulesDestination, function (err: Error) {
-							if (err) {
-								console.error(err);
-								reject();
-							}
-							console.log(chalk.green('Moved to: ') + nodeModulesDestination);
-							resolve();
-						});
-					});
+				getGitModule(match[1], match[2], match[3]).then((path) => {
+					return buildGitModule(path, moduleConfig.peerDependencies);
 				})
+					// return new Promise<void>((resolve, reject) => {
+					// 	gitModule.build(path);
+					// 	const nodeModulesDestination = nodeModules(moduleId);
+					// 	ncp(path, nodeModulesDestination, function (err: Error) {
+					// 		if (err) {
+					// 			console.error(err);
+					// 			reject();
+					// 		}
+					// 		console.log(chalk.green('Moved to: ') + nodeModulesDestination);
+					// 		resolve();
+					// 	});
+					// });
+				// })
 			);
 		}
 	});
