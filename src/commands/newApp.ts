@@ -5,6 +5,7 @@ import { readdirSync } from 'fs';
 import { render } from  '../util/template';
 import { template, destinationRoot, destinationSrc, nodeModules } from '../util/path';
 import getGitModule from '../util/getGitModule';
+import { satisfies } from 'semver';
 
 // Not a TS module
 const availableModules = require('../config/availableModules.json');
@@ -125,8 +126,13 @@ const createAppConfig = (answers: CreateAnswers) => {
 			for (let peerDepId in modulePeerDeps) {
 				const peerDep = modulePeerDeps[peerDepId];
 				if (currentDependencies.indexOf(peerDepId) > -1) {
-					// TODO: Resolve Dependencies
-					console.log(chalk.yellow('Dependency Issue: ') + `Module: ${moduleId} requires PeerDependency of ${peerDepId} but conflict found`);
+					const depSatisfied = satisfies(modules[peerDepId].version, peerDep.version);
+					// Raise error if deps not satisfiable by selection
+					// of if version already loaded and peerDep requires
+					// github built from source version.
+					if (!depSatisfied || gitReg.test(peerDep.version)) {
+						console.log(chalk.red('Dependency Error: ') + `Module: ${moduleId} requires PeerDependency of ${peerDepId} but conflict found`);
+					}
 				} else {
 					console.log(chalk.green('Dependency Added: ') + `Module: ${moduleId} required PeerDependency of ${peerDepId}`);
 					modules[peerDepId] = peerDep;
