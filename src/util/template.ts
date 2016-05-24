@@ -1,7 +1,6 @@
 import { renderFile } from 'ejs';
 import { writeFile } from 'fs';
 import * as chalk from 'chalk';
-import Promise from 'dojo-core/Promise';
 
 function ejsRender(source: string, replacements: Object): Promise<string> {
 	return new Promise<string>((resolve, reject) => {

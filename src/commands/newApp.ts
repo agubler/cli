@@ -1,6 +1,5 @@
 import * as chalk from 'chalk';
 import * as inquirer from 'inquirer';
-import Promise from 'dojo-core/Promise';
 import { readdirSync } from 'fs';
 import { render } from  '../util/template';
 import { template, destinationRoot, destinationSrc } from '../util/path';

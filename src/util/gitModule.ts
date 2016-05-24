@@ -1,7 +1,6 @@
 import * as mkdirp from 'mkdirp';
 import * as chalk from 'chalk';
 import { createReadStream } from 'fs';
-import Promise from 'dojo-core/Promise';
 import { temp } from '../util/path';
 
 const got = require('got');
