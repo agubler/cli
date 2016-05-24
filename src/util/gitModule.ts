@@ -49,15 +49,19 @@ export const get = (owner: string, repo: string, commit: string = 'master'): Pro
 };
 
 export const build = (path: string, peerDependencies: ModuleConfigMap): Promise<void> => {
-	return new Promise<string>((resolve, reject) => {
-		let npmArguments = ['install'];
+	return new Promise<void>((resolve, reject) => {
+		let npmArguments = ['-s', 'install'];
 		Object.keys(peerDependencies).forEach(moduleId => {
 			npmArguments.push(`${moduleId}@${peerDependencies[moduleId].version}`);
 		});
 
 		spawn('npm', npmArguments, { stdio: 'inherit', cwd: path })
 			.on('close', () => {
-				resolve();
+				spawn('npm', ['-s', 'install'], { stdio: 'inherit', cwd: path })
+				.on('close', () => {
+					spawn('npm', ['-s', 'pack'], { stdio: 'inherit', cwd: path })
+					.on('close', resolve);
+				});
 			});
 	});
 };

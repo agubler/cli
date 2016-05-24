@@ -12,8 +12,8 @@
 	},
 	"dependencies": { <% var keys = Object.keys(modules);
 		keys.forEach(function (key, index) {
-		var module = modules[key]; if (!module.buildFromSource) { %>
-		"<%- key %>": "<%- module.version %>"<% if (index < keys.length -1) { %>,<% } } }) %>
+		var module = modules[key]; %>
+		"<%- key %>": "<%- module.version %>"<% if (index < keys.length -1) { %>,<% } }) %>
 	},
 	"devDependencies": {
 		"codecov.io": "0.1.6",

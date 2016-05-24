@@ -3,7 +3,7 @@ import * as inquirer from 'inquirer';
 import Promise from 'dojo-core/Promise';
 import { readdirSync } from 'fs';
 import { render } from  '../util/template';
-import { template, destinationRoot, destinationSrc, nodeModules } from '../util/path';
+import { template, destinationRoot, destinationSrc } from '../util/path';
 import { get as getGitModule, build as buildGitModule } from '../util/gitModule';
 // import { satisfies } from 'semver';
 
