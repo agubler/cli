@@ -61,7 +61,7 @@ export async function get(owner: string, repo: string, commit: string = 'master'
 
 async function npmInstallPeers(path: string, npmArguments: string[]) {
 	return new Promise((resolve, reject) => {
-	spawn('npm', npmArguments, { stdio: 'inherit', cwd: path })
+		spawn('npm', npmArguments, { stdio: 'inherit', cwd: path })
 			.on('close', resolve)
 			.on('error', reject);
 	});

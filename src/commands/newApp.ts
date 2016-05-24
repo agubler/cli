@@ -5,14 +5,10 @@ import { readdirSync } from 'fs';
 import { render } from  '../util/template';
 import { template, destinationRoot, destinationSrc } from '../util/path';
 import { get as getGitModule, build as buildGitModule } from '../util/gitModule';
-// import { satisfies } from 'semver';
 
 // Not a TS module
 const availableModules = require('../config/availableModules.json');
 const spawn = require('cross-spawn');
-const ncp = require('ncp').ncp;
-
-ncp.limit = 16;
 
 interface ProceedAnswers extends inquirer.Answers {
 	proceed: boolean;
@@ -53,14 +49,14 @@ let skip: SkipConfig;
 
 const gitReg = /github:(\w*)\/(\w*)#?(\w*)?/;
 
-const checkForAppName = (name: any): void => {
+function checkForAppName(name: any): void {
 	if (!name || name.length === 0) {
 		console.error(chalk.red('Error: ') + 'App Name is Required');
 		process.exit(1);
 	}
 };
 
-const checkForEmptyDir = (dirPath: string, exit: boolean = false): void | boolean => {
+function checkForEmptyDir(dirPath: string, exit: boolean = false): void | boolean {
 	const folderContents = readdirSync(dirPath);
 	const isEmpty = folderContents.length === 0;
 
@@ -72,39 +68,37 @@ const checkForEmptyDir = (dirPath: string, exit: boolean = false): void | boolea
 	}
 };
 
-const proceedCheck = (name: string) => {
-	return inquirer.prompt([{
+async function proceedCheck(name: string) {
+	let response = await inquirer.prompt([{
 		type: 'confirm',
 		name: 'proceed',
 		message: `Do you wish to proceed with creating ${name}?`,
 		default: true
-	}]).then((response: ProceedAnswers) => {
-		if (!response.proceed) {
-			console.error(chalk.red('\nExiting: ') + 'User chose to exit');
-			process.exit(1);
-		}
-	});
-};
+	}]);
 
-const renderFiles = () => {
+	if (!(<ProceedAnswers> response).proceed) {
+		console.error(chalk.red('\nExiting: ') + 'User chose to exit');
+		process.exit(1);
+	}
+}
+
+async function renderFiles() {
 	if (skip.render) { return; }
 
 	console.log(chalk.bold('\n-- Rendering Files --'));
 
-	return Promise.all([
-		render(template('_package.json'), destinationRoot('package.json'), appConfig),
-		render(template('_Gruntfile.js'), destinationRoot('Gruntfile.js'), appConfig),
-		render(template('tsconfig.json'), destinationRoot('tsconfig.json'), appConfig),
-		render(template('tslint.json'), destinationRoot('tslint.json'), appConfig),
-		render(template('_editorconfig'), destinationRoot('.editorconfig'), appConfig),
-		render(template('index.html'), destinationSrc('index.html'), appConfig),
-		render(template('index.ts'), destinationSrc('index.ts'), appConfig),
-		render(template('app.ts'), destinationSrc('app.ts'), appConfig),
-		render(template('app.styl'), destinationSrc('app.styl'), appConfig)
-	]);
+	await render(template('_package.json'), destinationRoot('package.json'), appConfig);
+	await render(template('_Gruntfile.js'), destinationRoot('Gruntfile.js'), appConfig);
+	await render(template('tsconfig.json'), destinationRoot('tsconfig.json'), appConfig);
+	await render(template('tslint.json'), destinationRoot('tslint.json'), appConfig);
+	await render(template('_editorconfig'), destinationRoot('.editorconfig'), appConfig);
+	await render(template('index.html'), destinationSrc('index.html'), appConfig);
+	await render(template('index.ts'), destinationSrc('index.ts'), appConfig);
+	await render(template('app.ts'), destinationSrc('app.ts'), appConfig);
+	await render(template('app.styl'), destinationSrc('app.styl'), appConfig);
 };
 
-const createAppConfig = (answers: CreateAnswers) => {
+function createAppConfig(answers: CreateAnswers) {
 	console.log(chalk.bold('\n-- Creating AppConfig From Answers --'));
 	let modules: ModuleConfigMap = {};
 	const allVersionedModules: ModuleConfigMap = availableModules[answers.version].modules;
@@ -162,25 +156,19 @@ async function getGithubModules() {
 	}
 };
 
-const installDependencies = () => {
+async function installDependencies() {
 	if (skip.npm) { return; }
 
-	let taskName = chalk.italic('npm install');
-	console.log(chalk.bold('\n-- Running ' + taskName));
-	let child = spawn('npm', ['install'], { stdio: 'inherit' });
-	return child;
-};
+	console.log(chalk.bold('\n-- Running npm install --'));
 
-export const createNew = (name: string, skipConfig: SkipConfig) => {
-	skip = skipConfig;
+	return new Promise((resolve, reject) => {
+		spawn('npm', ['install'], { stdio: 'inherit' })
+			.on('close', resolve)
+			.on('error', reject);
+	});
+}
 
-	checkForAppName(name);
-
-	if (!skip.force) {
-		checkForEmptyDir(destinationRoot(), true);
-	}
-
-	let questions: inquirer.Questions = [
+const questions: inquirer.Questions = [
 		{
 			type: 'text',
 			name: 'description',
@@ -211,17 +199,25 @@ export const createNew = (name: string, skipConfig: SkipConfig) => {
 		}
 	];
 
+export async function createNew(name: string, skipConfig: SkipConfig) {
+	skip = skipConfig;
+
+	checkForAppName(name);
+
+	if (!skip.force) {
+		checkForEmptyDir(destinationRoot(), true);
+	}
+
 	console.log(chalk.bold('-- Lets get started --\n'));
 
-	proceedCheck(name)
-		.then(() => inquirer.prompt(questions))
-		.then((answers: CreateAnswers) => {
-			answers.name = name;
-			console.log(JSON.stringify(answers, null, '  '));
-			return answers;
-		})
-		.then(createAppConfig)
-		.then(getGithubModules)
-		.then(renderFiles)
-		.then(installDependencies);
+	await proceedCheck(name);
+	let answers = await inquirer.prompt(questions);
+
+	(<CreateAnswers> answers).name = name;
+	console.log(JSON.stringify(answers, null, '  '));
+
+	await createAppConfig(<CreateAnswers> answers);
+	await getGithubModules();
+	await renderFiles();
+	await installDependencies();
 };
