@@ -144,7 +144,7 @@ const createAppConfig = (answers: CreateAnswers) => {
 	};
 };
 
-const getGithubModules = () => {
+async function getGithubModules() {
 	if (skip.git) { return; }
 
 	console.log(chalk.bold('\n-- Downloading GitHub Modules --'));

@@ -48,20 +48,37 @@ export const get = (owner: string, repo: string, commit: string = 'master'): Pro
 	});
 };
 
-export const build = (path: string, peerDependencies: ModuleConfigMap): Promise<void> => {
-	return new Promise<void>((resolve, reject) => {
-		let npmArguments = ['-s', 'install'];
-		Object.keys(peerDependencies).forEach(moduleId => {
-			npmArguments.push(`${moduleId}@${peerDependencies[moduleId].version}`);
-		});
-
-		spawn('npm', npmArguments, { stdio: 'inherit', cwd: path })
-			.on('close', () => {
-				spawn('npm', ['-s', 'install'], { stdio: 'inherit', cwd: path })
-				.on('close', () => {
-					spawn('npm', ['-s', 'pack'], { stdio: 'inherit', cwd: path })
-					.on('close', resolve);
-				});
-			});
+async function npmInstallPeers(path: string, npmArguments: string[]) {
+	return new Promise((resolve, reject) => {
+	spawn('npm', npmArguments, { stdio: 'inherit', cwd: path })
+			.on('close', resolve)
+			.on('error', reject);
 	});
+}
+
+async function npmInstall(path: string) {
+	return new Promise((resolve, reject) => {
+		spawn('npm', ['-s', 'install'], { stdio: 'inherit', cwd: path })
+			.on('close', resolve)
+			.on('error', reject);
+	});
+}
+
+async function npmPack(path: string) {
+	return new Promise((resolve, reject) => {
+		spawn('npm', ['-s', 'pack'], { stdio: 'inherit', cwd: path })
+			.on('close', resolve)
+			.on('error', reject);
+	});
+}
+
+export async function build(path: string, peerDependencies: ModuleConfigMap): Promise<void> {
+	const npmArguments = ['-s', 'install'];
+	Object.keys(peerDependencies).forEach(moduleId => {
+		npmArguments.push(`${moduleId}@${peerDependencies[moduleId].version}`);
+	});
+
+	await npmInstallPeers(path, npmArguments);
+	await npmInstall(path);
+	await npmPack(path);
 };
