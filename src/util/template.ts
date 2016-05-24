@@ -25,7 +25,7 @@ function writeRenderedFile(str: string, destination: string): Promise<void> {
 }
 
 export async function render(source: string, destination: string, replacements: Object): Promise<void> {
-	console.log(chalk.yellow('Rendering: ') + `rendering ${destination}`);
+	console.log(chalk.yellow('Rendering: ') + `${destination}`);
 
 	const str = await ejsRender(source, replacements);
 	await writeRenderedFile(str, destination);

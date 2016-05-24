@@ -84,7 +84,7 @@ async function proceedCheck(name: string) {
 async function renderFiles() {
 	if (skip.render) { return; }
 
-	console.log(chalk.bold('\n-- Rendering Files --'));
+	console.log(chalk.bold('-- Rendering Files --'));
 
 	await render(template('_package.json'), destinationRoot('package.json'), appConfig);
 	await render(template('_Gruntfile.js'), destinationRoot('Gruntfile.js'), appConfig);
@@ -97,50 +97,64 @@ async function renderFiles() {
 	await render(template('app.styl'), destinationSrc('app.styl'), appConfig);
 };
 
-function createAppConfig(answers: CreateAnswers) {
-	console.log(chalk.bold('\n-- Creating AppConfig From Answers --'));
+function getSelectedModuleConfig(selectedModuleIds: string[], availableModuleConfig: ModuleConfigMap): ModuleConfigMap {
 	let modules: ModuleConfigMap = {};
-	const allVersionedModules: ModuleConfigMap = availableModules[answers.version].modules;
 
 	// Get just the module config we care about
-	Object.keys(allVersionedModules).forEach((moduleId) => {
-		if (answers.modules.indexOf(moduleId) > -1) {
-			modules[moduleId] = allVersionedModules[moduleId];
+	Object.keys(availableModuleConfig).forEach((moduleId) => {
+		if (selectedModuleIds.indexOf(moduleId) > -1) {
+			modules[moduleId] = availableModuleConfig[moduleId];
 		}
 	});
 
-	// Upgrade peerDependencies to top-level
-	for (let moduleId in modules) {
-		const module = modules[moduleId];
+	return modules;
+}
+
+function getPeerDependencies(modules: ModuleConfigMap): ModuleConfigMap {
+	const returnModules = Object.assign({}, modules);
+
+	for (let moduleId in returnModules) {
+		const module = returnModules[moduleId];
 		const modulePeerDeps = module.peerDependencies;
 
 		if (modulePeerDeps) {
-			const currentDependencies = Object.keys(modules);
+			const currentDependencies = Object.keys(returnModules);
 			for (let peerDepId in modulePeerDeps) {
 				const peerDep = modulePeerDeps[peerDepId];
 				if (currentDependencies.indexOf(peerDepId) > -1) {
-					if (modules[peerDepId].version !== peerDep.version || gitReg.test(peerDep.version)) {
+					if (returnModules[peerDepId].version !== peerDep.version || gitReg.test(peerDep.version)) {
 						console.log(chalk.red('Dependency Error: ') + `Module: ${moduleId} requires PeerDependency of ${peerDepId} but conflict found`);
 					}
 				} else {
 					console.log(chalk.green('Dependency Added: ') + `Module: ${moduleId} requires PeerDependency of ${peerDepId}`);
-					modules[peerDepId] = peerDep;
+					returnModules[peerDepId] = peerDep;
 				}
 			}
 		}
 	}
 
+	return returnModules;
+}
+
+function createAppConfig(answers: CreateAnswers) {
+	console.log(chalk.bold('-- Creating AppConfig From Answers --'));
+	let selectedModuleConfig: ModuleConfigMap = {};
+	const allVersionedModules: ModuleConfigMap = availableModules[answers.version].modules;
+
+	selectedModuleConfig = getSelectedModuleConfig(answers.modules, allVersionedModules);
+	const fullModuleConfig = getPeerDependencies(selectedModuleConfig);
+
 	appConfig = {
 		name: answers.name,
 		description: answers.description,
-		modules
+		modules: fullModuleConfig
 	};
 };
 
 async function getGithubModules() {
 	if (skip.git) { return; }
 
-	console.log(chalk.bold('\n-- Downloading GitHub Modules --'));
+	console.log(chalk.bold('-- Downloading GitHub Modules --'));
 
 	const moduleIds = Object.keys(appConfig.modules);
 
@@ -158,12 +172,15 @@ async function getGithubModules() {
 async function installDependencies() {
 	if (skip.npm) { return; }
 
-	console.log(chalk.bold('\n-- Running npm install --'));
+	console.log(chalk.bold('-- Running npm install --'));
 
 	return new Promise((resolve, reject) => {
 		spawn('npm', ['install'], { stdio: 'inherit' })
 			.on('close', resolve)
-			.on('error', reject);
+			.on('error', (err: Error) => {
+				console.log('ERROR: ' + err);
+				reject();
+			});
 	});
 }
 
@@ -216,7 +233,13 @@ export async function createNew(name: string, skipConfig: SkipConfig) {
 	console.log(JSON.stringify(answers, null, '  '));
 
 	await createAppConfig(<CreateAnswers> answers);
+
+	console.log('APP CONFIG: ');
+	console.log(JSON.stringify(appConfig, null, '  '));
+
 	await getGithubModules();
 	await renderFiles();
 	await installDependencies();
+
+	console.log(chalk.green.bold('\n ✔ DONE'));
 };
