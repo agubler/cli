@@ -19,33 +19,44 @@ interface ModuleConfig {
 	peerDependencies?: ModuleConfigMap;
 }
 
-export const get = (owner: string, repo: string, commit: string = 'master'): Promise<string> => {
-	return new Promise<string>((resolve, reject) => {
-		const gitPath = `https://github.com/${owner}/${repo}/archive/${commit}.zip`;
-		const destPath = temp(`github/${owner}/`);
-		const archivePath = destPath + '_archive/';
-		const destArchive = archivePath + `${repo}-${commit}.zip`;
-		const destFolderName = destPath + `${repo}-${commit}`;
-
-		mkdirp.sync(destPath);
-		mkdirp.sync(archivePath);
-
-		console.log(chalk.yellow('Downloading: ') + gitPath);
-		got.stream(gitPath)
-			.pipe(fstream.Writer(destArchive))
-			.on('close', () => {
-				let readStream = createReadStream(destArchive);
-				let writeStream = fstream.Writer(destPath);
-
-				readStream
-					.pipe(unzip.Parse())
-					.pipe(writeStream)
-					.on('close', () => {
-						console.log(chalk.green('Written & Unpacked to: ') + destFolderName);
-						resolve(destFolderName);
-					});
-			});
+async function getGithubZipFile(githubArchivePath: string, destArchivePath: string) {
+	console.log(chalk.yellow('Downloading: ') + githubArchivePath);
+	return new Promise<void>((resolve, reject) => {
+		got.stream(githubArchivePath)
+			.pipe(fstream.Writer(destArchivePath))
+			.on('close', resolve)
+			.on('error', reject);
 	});
+}
+
+async function unpackZipFile(archivePath: string, unpackPath: string) {
+	let readStream = createReadStream(archivePath);
+	let writeStream = fstream.Writer(unpackPath);
+
+	console.log(chalk.yellow('Unpacking: ') + archivePath);
+	return new Promise<void>((resolve, reject) => {
+		readStream
+			.pipe(unzip.Parse())
+			.pipe(writeStream)
+			.on('close', resolve)
+			.on('error', reject);
+	});
+}
+
+export async function get(owner: string, repo: string, commit: string = 'master'): Promise<string> {
+	const githubArchivePath = `https://github.com/${owner}/${repo}/archive/${commit}.zip`;
+	const destPath = temp(`github/${owner}/`);
+	const archivePath = destPath + '_archive/';
+	const destArchivePath = archivePath + `${repo}-${commit}.zip`;
+	const destFolderName = destPath + `${repo}-${commit}`;
+
+	mkdirp.sync(destPath);
+	mkdirp.sync(archivePath);
+
+	await getGithubZipFile(githubArchivePath, destArchivePath);
+	await unpackZipFile(destArchivePath, destPath);
+
+	return destFolderName;
 };
 
 async function npmInstallPeers(path: string, npmArguments: string[]) {
@@ -72,13 +83,13 @@ async function npmPack(path: string) {
 	});
 }
 
-export async function build(path: string, peerDependencies: ModuleConfigMap): Promise<void> {
-	const npmArguments = ['-s', 'install'];
+export async function build(path: string, peerDependencies: ModuleConfigMap) {
+	const peerInstallArgs = ['-s', 'install'];
 	Object.keys(peerDependencies).forEach(moduleId => {
-		npmArguments.push(`${moduleId}@${peerDependencies[moduleId].version}`);
+		peerInstallArgs.push(`${moduleId}@${peerDependencies[moduleId].version}`);
 	});
 
-	await npmInstallPeers(path, npmArguments);
+	await npmInstallPeers(path, peerInstallArgs);
 	await npmInstall(path);
 	await npmPack(path);
 };

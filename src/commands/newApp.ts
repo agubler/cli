@@ -148,34 +148,18 @@ async function getGithubModules() {
 	if (skip.git) { return; }
 
 	console.log(chalk.bold('\n-- Downloading GitHub Modules --'));
-	let getGitPromises: Promise<void>[] = [];
 
-	Object.keys(appConfig.modules).forEach((moduleId) => {
+	const moduleIds = Object.keys(appConfig.modules);
+
+	for (let i = 0; i < moduleIds.length; i += 1) {
+		let moduleId = moduleIds[i];
 		let moduleConfig = appConfig.modules[moduleId];
 		const match = moduleConfig.version.match(gitReg);
 		if (match) {
-			getGitPromises.push(
-				getGitModule(match[1], match[2], match[3]).then((path) => {
-					return buildGitModule(path, moduleConfig.peerDependencies);
-				})
-					// return new Promise<void>((resolve, reject) => {
-					// 	gitModule.build(path);
-					// 	const nodeModulesDestination = nodeModules(moduleId);
-					// 	ncp(path, nodeModulesDestination, function (err: Error) {
-					// 		if (err) {
-					// 			console.error(err);
-					// 			reject();
-					// 		}
-					// 		console.log(chalk.green('Moved to: ') + nodeModulesDestination);
-					// 		resolve();
-					// 	});
-					// });
-				// })
-			);
+			const path = await getGitModule(match[1], match[2], match[3]);
+			await buildGitModule(path, moduleConfig.peerDependencies);
 		}
-	});
-
-	return Promise.all(getGitPromises);
+	}
 };
 
 const installDependencies = () => {
