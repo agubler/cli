@@ -8,14 +8,14 @@ const unzip = require('unzip');
 const fstream = require('fstream');
 const spawn = require('cross-spawn');
 
-interface ModuleConfigMap {
-	[ moduleId: string ]: ModuleConfig;
-}
-
 interface ModuleConfig {
 	version: string;
 	buildFromSource?: boolean;
 	peerDependencies?: ModuleConfigMap;
+}
+
+interface ModuleConfigMap {
+	[ moduleId: string ]: ModuleConfig;
 }
 
 async function getGithubZipFile(githubArchivePath: string, destArchivePath: string) {
@@ -41,22 +41,6 @@ async function unpackZipFile(archivePath: string, unpackPath: string) {
 			.on('error', reject);
 	});
 }
-
-export async function get(owner: string, repo: string, commit: string = 'master'): Promise<string> {
-	const githubArchivePath = `https://github.com/${owner}/${repo}/archive/${commit}.zip`;
-	const destPath = temp(`github/${owner}/`);
-	const archivePath = destPath + '_archive/';
-	const destArchivePath = archivePath + `${repo}-${commit}.zip`;
-	const destFolderName = destPath + `${repo}-${commit}`;
-
-	mkdirp.sync(destPath);
-	mkdirp.sync(archivePath);
-
-	await getGithubZipFile(githubArchivePath, destArchivePath);
-	await unpackZipFile(destArchivePath, destPath);
-
-	return destFolderName;
-};
 
 async function npmInstallPeers(path: string, npmArguments: string[]) {
 	return new Promise((resolve, reject) => {
@@ -91,4 +75,20 @@ export async function build(path: string, peerDependencies: ModuleConfigMap) {
 	await npmInstallPeers(path, peerInstallArgs);
 	await npmInstall(path);
 	await npmPack(path);
+};
+
+export async function get(owner: string, repo: string, commit: string = 'master'): Promise<string> {
+	const githubArchivePath = `https://github.com/${owner}/${repo}/archive/${commit}.zip`;
+	const destPath = temp(`github/${owner}/`);
+	const archivePath = destPath + '_archive/';
+	const destArchivePath = archivePath + `${repo}-${commit}.zip`;
+	const destFolderName = destPath + `${repo}-${commit}`;
+
+	mkdirp.sync(destPath);
+	mkdirp.sync(archivePath);
+
+	await getGithubZipFile(githubArchivePath, destArchivePath);
+	await unpackZipFile(destArchivePath, destPath);
+
+	return destFolderName;
 };

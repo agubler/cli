@@ -9,20 +9,16 @@ import { get as getGitModule, build as buildGitModule } from '../util/gitModule'
 const availableModules = require('../config/availableModules.json');
 const spawn = require('cross-spawn');
 
-interface ProceedAnswers extends inquirer.Answers {
-	proceed: boolean;
+interface AppConfig {
+	name: string;
+	modules: ModuleConfigMap;
+	description: string;
 }
 
 interface CreateAnswers extends inquirer.Answers {
 	version: string;
 	modules: string[];
 	name: string;
-	description: string;
-}
-
-interface AppConfig {
-	name: string;
-	modules: ModuleConfigMap;
 	description: string;
 }
 
@@ -34,6 +30,10 @@ interface ModuleConfig {
 
 interface ModuleConfigMap {
 	[ moduleId: string ]: ModuleConfig;
+}
+
+interface ProceedAnswers extends inquirer.Answers {
+	proceed: boolean;
 }
 
 interface SkipConfig {
