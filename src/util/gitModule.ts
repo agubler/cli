@@ -19,7 +19,7 @@ interface ModuleConfigMap {
 }
 
 async function getGithubZipFile(githubArchivePath: string, destArchivePath: string) {
-	console.log(chalk.yellow('Downloading: ') + githubArchivePath);
+	console.log(chalk.green('Downloading: ') + githubArchivePath);
 	return new Promise<void>((resolve, reject) => {
 		got.stream(githubArchivePath)
 			.pipe(fstream.Writer(destArchivePath))
@@ -32,7 +32,7 @@ async function unpackZipFile(archivePath: string, unpackPath: string) {
 	let readStream = createReadStream(archivePath);
 	let writeStream = fstream.Writer(unpackPath);
 
-	console.log(chalk.yellow('Unpacking: ') + archivePath);
+	console.log(chalk.green('Unpacking: ') + archivePath);
 	return new Promise<void>((resolve, reject) => {
 		readStream
 			.pipe(unzip.Parse())
@@ -75,6 +75,9 @@ export async function build(path: string, peerDependencies: ModuleConfigMap) {
 	await npmInstallPeers(path, peerInstallArgs);
 	await npmInstall(path);
 	await npmPack(path);
+
+	const packageDetails = require(path + '/package.json');
+	return `${path}/${packageDetails.name}-${packageDetails.version}.tgz`;
 };
 
 export async function get(owner: string, repo: string, commit: string = 'master'): Promise<string> {

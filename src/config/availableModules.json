@@ -3,33 +3,46 @@
 		"default": true,
 		"name": "Stable (recommended)",
 		"modules": {
-			"@reactivex/rxjs": {
-				"version": "5.0.0-beta.6",
-				"packageLocation": "/dist/amd",
-				"packageName": "rxjs"
-			},
 			"dojo-widgets": {
-				"version": "github:dojo/widgets",
+				"version": "github:dojo/widgets#83719a857e51b398222953d5216f3813757ae44f",
 				"buildFromSource": true,
+				"globalTypings": {
+					"dojo-widgets": "npm:dojo-widgets"
+				},
 				"peerDependencies": {
 					"dojo-compose": {
-						"version": ">=2.0.0-beta.2"
+						"version": ">=2.0.0-beta.2",
+						"globalTypings": {
+							"dojo-compose": "npm:dojo-compose"
+						}
 					},
 					"dojo-core": {
-						"version": ">=2.0.0-alpha.5"
+						"version": ">=2.0.0-alpha.5",
+						"globalTypings": {
+							"dojo-core": "npm:dojo-core"
+						}
 					},
 					"immutable": {
 						"version": "^3.7.6",
-						"packageLocation": "/dist"
+						"packageLocation": "/dist",
+						"typings": {
+							"immutable": "npm:immutable"
+						}
 					},
 					"maquette": {
 						"version": "^2.3.1",
-						"packageLocation": "/dist"
+						"packageLocation": "/dist",
+						"typings": {
+							"maquette": "npm:maquette"
+						}
 					},
 					"@reactivex/rxjs": {
 						"version": "5.0.0-beta.6",
 						"packageLocation": "/dist/amd",
-						"packageName": "rxjs"
+						"packageName": "rxjs",
+						"typings": {
+							"@reactivex/RxJS": "npm:@reactivex/RxJS"
+						}
 					}
 				}
 			},
@@ -46,6 +59,9 @@
 			},
 			"dojo-compose": {
 				"version": ">=2.0.0-beta.2",
+				"globalTypings": {
+					"dojo-compose": "npm:dojo-compose"
+				},
 				"peerDependencies": {
 					"dojo-core": {
 						"version": ">=2.0.0-alpha.5"
@@ -54,11 +70,18 @@
 			},
 			"dojo-core": {
 				"version": ">=2.0.0-alpha.5",
-				"checked": true
+				"checked": true,
+				"globalTypings": {
+					"dojo-core": "npm:dojo-core"
+				}
 			},
 			"dojo-loader": {
 				"version": ">=2.0.0-beta.4",
-				"checked": true
+				"checked": true,
+				"globalTypings": {
+					"dojo-loader": "npm:dojo-loader"
+				}
+
 			}
 		}
 	},

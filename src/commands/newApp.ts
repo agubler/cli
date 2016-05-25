@@ -13,6 +13,8 @@ interface AppConfig {
 	name: string;
 	modules: ModuleConfigMap;
 	description: string;
+	typings: TypingsConfigMap;
+	globalTypings: TypingsConfigMap;
 }
 
 interface CreateAnswers extends inquirer.Answers {
@@ -26,6 +28,8 @@ interface ModuleConfig {
 	version: string;
 	buildFromSource?: boolean;
 	peerDependencies?: ModuleConfigMap;
+	typings?: TypingsConfigMap;
+	globalTypings?: TypingsConfigMap;
 }
 
 interface ModuleConfigMap {
@@ -41,6 +45,10 @@ interface SkipConfig {
 	git: boolean;
 	render: boolean;
 	force: boolean;
+}
+
+interface TypingsConfigMap {
+	[ moduleId: string ]: string;
 }
 
 let appConfig: AppConfig;
@@ -88,6 +96,7 @@ async function renderFiles() {
 
 	await render(template('_package.json'), destinationRoot('package.json'), appConfig);
 	await render(template('_Gruntfile.js'), destinationRoot('Gruntfile.js'), appConfig);
+	await render(template('_typings.json'), destinationRoot('typings.json'), appConfig);
 	await render(template('tsconfig.json'), destinationRoot('tsconfig.json'), appConfig);
 	await render(template('tslint.json'), destinationRoot('tslint.json'), appConfig);
 	await render(template('_editorconfig'), destinationRoot('.editorconfig'), appConfig);
@@ -136,18 +145,44 @@ function getPeerDependencies(modules: ModuleConfigMap): ModuleConfigMap {
 	return returnModules;
 }
 
+function mergeTypings(moduleId: string, source: TypingsConfigMap, destination: TypingsConfigMap) {
+	for (let typingId in source) {
+		const typingVersion = source[typingId];
+		if (!destination[typingId]) {
+			destination[typingId] = typingVersion;
+		} else if (destination[typingId] !== typingVersion) {
+			console.log(chalk.yellow('Typing Dependency Warning: ') + `Module: ${moduleId} requires typing of ${typingId}:${typingVersion} but conflict found`);
+		}
+	}
+}
+
+function getTypings(modules: ModuleConfigMap): [TypingsConfigMap, TypingsConfigMap] {
+	const typings: TypingsConfigMap = {};
+	const globalTypings: TypingsConfigMap = {};
+
+	for (let moduleId in modules) {
+		const module = modules[moduleId];
+		module.typings && mergeTypings(moduleId, module.typings, typings);
+		module.globalTypings && mergeTypings(moduleId, module.globalTypings, globalTypings);
+	}
+
+	return [typings, globalTypings];
+}
+
 function createAppConfig(answers: CreateAnswers) {
 	console.log(chalk.bold('-- Creating AppConfig From Answers --'));
-	let selectedModuleConfig: ModuleConfigMap = {};
-	const allVersionedModules: ModuleConfigMap = availableModules[answers.version].modules;
 
-	selectedModuleConfig = getSelectedModuleConfig(answers.modules, allVersionedModules);
-	const fullModuleConfig = getPeerDependencies(selectedModuleConfig);
+	const allVersionedModules: ModuleConfigMap = availableModules[answers.version].modules;
+	const selectedModuleConfig = getSelectedModuleConfig(answers.modules, allVersionedModules);
+	const allDependencies = getPeerDependencies(selectedModuleConfig);
+	const [typings, globalTypings] = getTypings(allDependencies);
 
 	appConfig = {
 		name: answers.name,
 		description: answers.description,
-		modules: fullModuleConfig
+		modules: allDependencies,
+		typings,
+		globalTypings
 	};
 };
 
@@ -164,7 +199,8 @@ async function getGithubModules() {
 		const match = moduleConfig.version.match(gitReg);
 		if (match) {
 			const path = await getGitModule(match[1], match[2], match[3]);
-			await buildGitModule(path, moduleConfig.peerDependencies);
+			const builtFile = await buildGitModule(path, moduleConfig.peerDependencies);
+			console.log('BUILT FILE: ' + builtFile);
 		}
 	}
 };
@@ -227,16 +263,11 @@ export async function createNew(name: string, skipConfig: SkipConfig) {
 	console.log(chalk.bold('-- Lets get started --\n'));
 
 	await proceedCheck(name);
-	let answers = await inquirer.prompt(questions);
 
+	let answers = await inquirer.prompt(questions);
 	(<CreateAnswers> answers).name = name;
-	console.log(JSON.stringify(answers, null, '  '));
 
 	await createAppConfig(<CreateAnswers> answers);
-
-	console.log('APP CONFIG: ');
-	console.log(JSON.stringify(appConfig, null, '  '));
-
 	await getGithubModules();
 	await renderFiles();
 	await installDependencies();
