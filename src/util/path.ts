@@ -1,33 +1,41 @@
 import * as mkdirp from 'mkdirp';
 import { existsSync } from 'fs';
+import * as path from 'path';
 
-const path = {
-	templates: __dirname + '/../templates/',
-	destinationRoot: process.cwd() + '/',
-	destinationSrc: process.cwd() + '/src/',
-	temp: process.cwd() + '/_temp/',
-	nodeModules: process.cwd() + '/node_modules/'
+const findCacheDir = require('find-cache-dir');
+const pkgDir = require('pkg-dir');
+
+const basePath: string = pkgDir.sync(__dirname);
+const cacheDir: string = findCacheDir({name: 'dojo-cli', create: true, cwd: '../..'});
+
+interface PathMap {
+	[ moduleId: string ]: string;
+}
+
+const paths: PathMap = {
+	templates: path.join(basePath, 'templates'),
+	destRoot: process.cwd(),
+	destSrc: path.join(process.cwd(), 'src'),
+	temp: path.join(process.cwd(), '_temp'),
+	nodeModules: path.join(process.cwd(), 'node_modules'),
+	projectCache: path.join(process.cwd(), '.dojo/cache'),
+	cliCache: cacheDir
 };
 
-export const template = function (fileName: string = ''): string {
-	return path.templates + fileName;
-};
+console.dir(paths);
 
-export const destinationRoot = function (fileName: string = ''): string {
-	return path.destinationRoot + fileName;
-};
+export const get = function (base: string, pathStr: string): string {
+	console.log(`Get path called with base: ${base}, pathStr: ${pathStr}`);
 
-export const destinationSrc = function (fileName: string = ''): string {
-	!existsSync(path.destinationSrc) &&  mkdirp.sync(path.destinationSrc);
-	return path.destinationSrc + fileName;
-};
+	const resolvedPath = path.join(paths[base], pathStr);
+	const resolvedDir = path.dirname(resolvedPath);
 
-export const temp = function (fileName: string = ''): string {
-	!existsSync(path.temp) && mkdirp.sync(path.temp);
-	return path.temp + fileName;
-};
+	console.log(`resolvedPath: ${resolvedPath}, resolvedDir: ${resolvedDir}`);
+	if (!existsSync(resolvedDir)) {
+		console.log('making folder');
+		mkdirp.sync(resolvedDir);
+	}
 
-export const nodeModules = function (fileName: string = ''): string {
-	!existsSync(path.nodeModules) && mkdirp.sync(path.nodeModules);
-	return path.nodeModules + fileName;
+	console.log(`GOT PATH: ${resolvedPath}`);
+	return resolvedPath;
 };

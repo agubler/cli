@@ -1,9 +1,10 @@
 import * as chalk from 'chalk';
 import * as inquirer from 'inquirer';
-import { readdirSync } from 'fs';
+import { readdirSync, createReadStream, createWriteStream } from 'fs';
 import { render } from  '../util/template';
-import { template, destinationRoot, destinationSrc } from '../util/path';
+import { get as getPath } from '../util/path';
 import { get as getGitModule, build as buildGitModule } from '../util/gitModule';
+import * as mkdirp from 'mkdirp';
 
 // Not a TS module
 const availableModules = require('../config/availableModules.json');
@@ -94,16 +95,16 @@ async function renderFiles() {
 
 	console.log(chalk.bold('-- Rendering Files --'));
 
-	await render(template('_package.json'), destinationRoot('package.json'), appConfig);
-	await render(template('_Gruntfile.js'), destinationRoot('Gruntfile.js'), appConfig);
-	await render(template('_typings.json'), destinationRoot('typings.json'), appConfig);
-	await render(template('tsconfig.json'), destinationRoot('tsconfig.json'), appConfig);
-	await render(template('tslint.json'), destinationRoot('tslint.json'), appConfig);
-	await render(template('_editorconfig'), destinationRoot('.editorconfig'), appConfig);
-	await render(template('index.html'), destinationSrc('index.html'), appConfig);
-	await render(template('index.ts'), destinationSrc('index.ts'), appConfig);
-	await render(template('app.ts'), destinationSrc('app.ts'), appConfig);
-	await render(template('app.styl'), destinationSrc('app.styl'), appConfig);
+	await render(getPath('template', '_package.json'), getPath('destRoot', 'package.json'), appConfig);
+	await render(getPath('template', '_Gruntfile.js'), getPath('destRoot', 'Gruntfile.js'), appConfig);
+	await render(getPath('template', '_typings.json'), getPath('destRoot', 'typings.json'), appConfig);
+	await render(getPath('template', 'tsconfig.json'), getPath('destRoot', 'tsconfig.json'), appConfig);
+	await render(getPath('template', 'tslint.json'), getPath('destRoot', 'tslint.json'), appConfig);
+	await render(getPath('template', '_editorconfig'), getPath('destRoot', '.editorconfig'), appConfig);
+	await render(getPath('template', 'index.html'), getPath('destSrc', 'index.html'), appConfig);
+	await render(getPath('template', 'index.ts'), getPath('destSrc', 'index.ts'), appConfig);
+	await render(getPath('template', 'app.ts'), getPath('destSrc', 'app.ts'), appConfig);
+	await render(getPath('template', 'app.styl'), getPath('destSrc', 'app.styl'), appConfig);
 };
 
 function getSelectedModuleConfig(selectedModuleIds: string[], availableModuleConfig: ModuleConfigMap): ModuleConfigMap {
@@ -186,6 +187,15 @@ function createAppConfig(answers: CreateAnswers) {
 	};
 };
 
+async function copyFile(source: string, destination: string): Promise<void> {
+	return new Promise<void>((resolve, reject) => {
+		createReadStream(source)
+			.pipe(createWriteStream(destination))
+			.on('close', resolve)
+			.on('error', reject);
+	});
+}
+
 async function getGithubModules() {
 	if (skip.git) { return; }
 
@@ -199,7 +209,13 @@ async function getGithubModules() {
 		const match = moduleConfig.version.match(gitReg);
 		if (match) {
 			const path = await getGitModule(match[1], match[2], match[3]);
+
 			const builtFile = await buildGitModule(path, moduleConfig.peerDependencies);
+
+			const cachePath = getPath('cliCache', `${match[1]}/${match[2]}/${match[3]}`);
+			mkdirp.sync(cachePath);
+			await copyFile(builtFile, cachePath);
+
 			console.log('BUILT FILE: ' + builtFile);
 		}
 	}
@@ -257,7 +273,7 @@ export async function createNew(name: string, skipConfig: SkipConfig) {
 	checkForAppName(name);
 
 	if (!skip.force) {
-		checkForEmptyDir(destinationRoot(), true);
+		checkForEmptyDir(getPath('destRoot', ''), true);
 	}
 
 	console.log(chalk.bold('-- Lets get started --\n'));
