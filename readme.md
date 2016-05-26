@@ -6,7 +6,7 @@ Not published yet
 ## Local install
 
 ```
-git clone git@github.com:Tomdye/dojo-cli.git
+git clone git@github.com:dojo/cli.git
 cd dojo-cli
 npm install -g
 npm link
