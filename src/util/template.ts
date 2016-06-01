@@ -1,5 +1,5 @@
 import { renderFile } from 'ejs';
-import { writeFile } from 'fs';
+import { writeFile } from 'fs-extra';
 import * as chalk from 'chalk';
 
 function ejsRender(source: string, replacements: Object): Promise<string> {

@@ -1,37 +1,29 @@
 // import * as mkdirp from 'mkdirp';
 import * as chalk from 'chalk';
-import { /* createReadStream, */ /* existsSync, */ createWriteStream } from 'fs';
-import { get as getPath } from '../util/path';
-
+import { createReadStream, existsSync, createWriteStream, mkdirsSync, copySync } from 'fs-extra';
+import { get as getPath } from './path';
+import { createUnzip } from 'zlib';
+import { dirname, join as joinPath } from 'path';
+import { Extract } from 'tar';
 const got = require('got');
-const mkdirp = require('mkdirp');
 
 // const unzip = require('unzip');
 // const fstream = require('fstream');
-const spawn = require('cross-spawn');
+// const spawn = require('cross-spawn');
+const execa = require('execa');
 // const md5 = require('md5');
 const { createHash } = require('crypto');
-
-interface ModuleConfig {
-	version: string;
-	buildFromSource?: boolean;
-	peerDependencies?: ModuleConfigMap;
-}
-
-interface ModuleConfigMap {
-	[ moduleId: string ]: ModuleConfig;
-}
 
 async function getGithubZipFile(owner: string, repo: string, commit: string = 'master'): Promise<[string, string]> {
 	// get zip file to projectTemp/owner-repo-hash
 	const githubArchivePath = `https://codeload.github.com/${owner}/${repo}/tar.gz/${commit}`;
-	const destPath = getPath('temp', `${owner}-${repo}-${commit}`);
+	const destPath = getPath('temp', owner, `${repo}-${commit}.tar.gz`);
 
-	mkdirp.sync(destPath);
+	mkdirsSync(dirname(destPath));
 
 	console.log(chalk.green('Downloading: ') + githubArchivePath);
 
-	const stream = got.stream('https://codeload.github.com/dojo/core/tar.gz/master');
+	const stream = got.stream(githubArchivePath);
 
 	return Promise.all([
 		streamHash(stream),
@@ -41,9 +33,9 @@ async function getGithubZipFile(owner: string, repo: string, commit: string = 'm
 
 async function streamWrite(stream: any, destination: string): Promise<string> {
 	return new Promise<string>((resolve, reject) => {
-		const destFileName = destination + '/package.tar.gz';
-		stream.pipe(createWriteStream(destFileName))
-			.on('close', () => { resolve(destFileName); })
+		// const destFileName = destination + '/package.tar.gz';
+		stream.pipe(createWriteStream(destination))
+			.on('close', () => { resolve(destination); })
 			.on('error', reject);
 	});
 }
@@ -61,87 +53,64 @@ async function streamHash(stream: any): Promise<string> {
 	});
 }
 
-// async function unpackZipFile(archivePath: string, unpackPath: string) {
-// 	let readStream = createReadStream(archivePath);
-// 	let writeStream = fstream.Writer(unpackPath);
+async function unpackZipFile(archivePath: string) {
+	let readStream = createReadStream(archivePath);
+	console.log(chalk.green('Unpacking: ') + `${archivePath} to ${dirname(archivePath)}`);
 
-// 	console.log(chalk.green('Unpacking: ') + archivePath);
-// 	return new Promise<void>((resolve, reject) => {
-// 		readStream
-// 			.pipe(unzip.Parse())
-// 			.pipe(writeStream)
-// 			.on('close', resolve)
-// 			.on('error', reject);
-// 	});
-// }
-
-async function npmInstallPeers(path: string, npmArguments: string[]) {
-	return new Promise((resolve, reject) => {
-		spawn('npm', npmArguments, { stdio: 'inherit', cwd: path })
+	return new Promise<void>((resolve, reject) => {
+		readStream
+			.pipe(createUnzip())
+			.pipe(Extract({ path: dirname(archivePath)}))
 			.on('close', resolve)
 			.on('error', reject);
 	});
 }
 
-async function npmInstall(path: string) {
-	return new Promise((resolve, reject) => {
-		spawn('npm', ['-s', 'install'], { stdio: 'inherit', cwd: path })
-			.on('close', resolve)
-			.on('error', reject);
+async function npmInstall(path: string, packages: string[] = []) {
+	return execa('npm', ['install', ...packages], { cwd: path }).then((result: any) => {
+		console.log('npm install complete');
 	});
 }
 
 async function npmPack(path: string) {
-	return new Promise((resolve, reject) => {
-		spawn('npm', ['-s', 'pack'], { stdio: 'inherit', cwd: path })
-			.on('close', resolve)
-			.on('error', reject);
+	return execa('npm', ['pack'], { cwd: path }).then((result: any) => {
+		console.log('npm pack complete');
 	});
 }
 
-export async function build(path: string, peerDependencies: ModuleConfigMap) {
-	const peerInstallArgs = ['-s', 'install'];
-	Object.keys(peerDependencies).forEach(moduleId => {
-		peerInstallArgs.push(`${moduleId}@${peerDependencies[moduleId].version}`);
+export async function build(path: string) {
+	const peerPackages: string[] = [];
+	const packageConfig = require(joinPath(path, 'package.json'));
+	const peerDeps = packageConfig.peerDependencies;
+
+	Object.keys(peerDeps).forEach(moduleId => {
+		peerPackages.push(`${moduleId}@${peerDeps[moduleId]}`);
 	});
 
-	await npmInstallPeers(path, peerInstallArgs);
+	await npmInstall(path, peerPackages);
 	await npmInstall(path);
 	await npmPack(path);
 
-	const packageDetails = require(path + '/package.json');
-
-	return `${path}/${packageDetails.name}-${packageDetails.version}.tgz`;
+	return `${path}/${packageConfig.name}-${packageConfig.version}.tgz`;
 };
 
 export async function get(owner: string, repo: string, commit?: string): Promise<string> {
-	// const githubArchivePath = `https://github.com/${owner}/${repo}/archive/${commit}.zip`;
-	// const destPath = getPath('temp', `github/${owner}/`);
-	// const archivePath = destPath + '_archive/';
-	// const destArchivePath = archivePath + `${repo}-${commit}.zip`;
-	// const destFolderName = destPath + `${repo}-${commit}`;
-
-	// get zip file to projectTemp/owner-repo-hash
-	// get md5 of zip
-	// if built version in CLI cache
-		// return path to cache/md5
-	// else
-		// build and move to cache/md5
-		// return path to cache/md5
-
 	const [ md5, filePath ] = await getGithubZipFile(owner, repo, commit);
 
 	console.log(`MD5: ${md5} Filepath: ${filePath}`);
-	console.log('Get Path: ' + getPath('cliCache', md5));
+	const cachePath = getPath('cliCache', md5);
 
-	// if (existsSync(getPath('cliCache', md5))) {
-	// 	console.log('File is already cached');
-	// } else {
-	// 	console.log('File is NOT cached');
-	// }
+	if (!existsSync(cachePath)) {
+		await unpackZipFile(filePath);
+		const builtModule = await build(joinPath(dirname(filePath), `${repo}-${commit}`));
+		console.log(`Built module is ${builtModule}`);
 
-	// mkdirp.sync(destPath);
-	// mkdirp.sync(archivePath);
+		mkdirsSync(cachePath);
+		copySync(builtModule, cachePath);
+	}
+
+	// mkdirsSync(destPath);
+	// mkdirsSync(archivePath);
 
 	// await getGithubZipFile(githubArchivePath, destArchivePath);
 	// await unpackZipFile(destArchivePath, destPath);

@@ -1,13 +1,12 @@
 import * as chalk from 'chalk';
 import * as inquirer from 'inquirer';
-import { readdirSync, createReadStream, createWriteStream } from 'fs';
+import { readdirSync, mkdirsSync } from 'fs-extra';
 import { render } from  '../util/template';
 import { get as getPath } from '../util/path';
-import { get as getGitModule, build as buildGitModule } from '../util/gitModule';
-import * as mkdirp from 'mkdirp';
+import { get as getGitModule } from '../util/gitModule';
 
 // Not a TS module
-const availableModules = require('../config/availableModules.json');
+const availableModules = require(getPath('config', 'availableModules.json'));
 const spawn = require('cross-spawn');
 
 interface AppConfig {
@@ -95,16 +94,16 @@ async function renderFiles() {
 
 	console.log(chalk.bold('-- Rendering Files --'));
 
-	await render(getPath('template', '_package.json'), getPath('destRoot', 'package.json'), appConfig);
-	await render(getPath('template', '_Gruntfile.js'), getPath('destRoot', 'Gruntfile.js'), appConfig);
-	await render(getPath('template', '_typings.json'), getPath('destRoot', 'typings.json'), appConfig);
-	await render(getPath('template', 'tsconfig.json'), getPath('destRoot', 'tsconfig.json'), appConfig);
-	await render(getPath('template', 'tslint.json'), getPath('destRoot', 'tslint.json'), appConfig);
-	await render(getPath('template', '_editorconfig'), getPath('destRoot', '.editorconfig'), appConfig);
-	await render(getPath('template', 'index.html'), getPath('destSrc', 'index.html'), appConfig);
-	await render(getPath('template', 'index.ts'), getPath('destSrc', 'index.ts'), appConfig);
-	await render(getPath('template', 'app.ts'), getPath('destSrc', 'app.ts'), appConfig);
-	await render(getPath('template', 'app.styl'), getPath('destSrc', 'app.styl'), appConfig);
+	await render(getPath('templates', '_package.json'), getPath('destRoot', 'package.json'), appConfig);
+	await render(getPath('templates', '_Gruntfile.js'), getPath('destRoot', 'Gruntfile.js'), appConfig);
+	await render(getPath('templates', '_typings.json'), getPath('destRoot', 'typings.json'), appConfig);
+	await render(getPath('templates', 'tsconfig.json'), getPath('destRoot', 'tsconfig.json'), appConfig);
+	await render(getPath('templates', 'tslint.json'), getPath('destRoot', 'tslint.json'), appConfig);
+	await render(getPath('templates', '_editorconfig'), getPath('destRoot', '.editorconfig'), appConfig);
+	await render(getPath('templates', 'index.html'), getPath('destSrc', 'index.html'), appConfig);
+	await render(getPath('templates', 'index.ts'), getPath('destSrc', 'index.ts'), appConfig);
+	await render(getPath('templates', 'app.ts'), getPath('destSrc', 'app.ts'), appConfig);
+	await render(getPath('templates', 'app.styl'), getPath('destSrc', 'app.styl'), appConfig);
 };
 
 function getSelectedModuleConfig(selectedModuleIds: string[], availableModuleConfig: ModuleConfigMap): ModuleConfigMap {
@@ -187,15 +186,6 @@ function createAppConfig(answers: CreateAnswers) {
 	};
 };
 
-async function copyFile(source: string, destination: string): Promise<void> {
-	return new Promise<void>((resolve, reject) => {
-		createReadStream(source)
-			.pipe(createWriteStream(destination))
-			.on('close', resolve)
-			.on('error', reject);
-	});
-}
-
 async function getGithubModules() {
 	if (skip.git) { return; }
 
@@ -208,15 +198,13 @@ async function getGithubModules() {
 		let moduleConfig = appConfig.modules[moduleId];
 		const match = moduleConfig.version.match(gitReg);
 		if (match) {
-			const path = await getGitModule(match[1], match[2], match[3]);
-
-			const builtFile = await buildGitModule(path, moduleConfig.peerDependencies);
+			/* const path =*/ await getGitModule(match[1], match[2], match[3]);
 
 			const cachePath = getPath('cliCache', `${match[1]}/${match[2]}/${match[3]}`);
-			mkdirp.sync(cachePath);
-			await copyFile(builtFile, cachePath);
+			mkdirsSync(cachePath);
+			// await copyFile(builtFile, cachePath);
 
-			console.log('BUILT FILE: ' + builtFile);
+			// console.log('BUILT FILE: ' + builtFile);
 		}
 	}
 };

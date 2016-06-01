@@ -4,7 +4,7 @@
 		"name": "Stable (recommended)",
 		"modules": {
 			"dojo-widgets": {
-				"version": "github:dojo/widgets#83719a857e51b398222953d5216f3813757ae44f",
+				"version": ">=2.0.0-alpha.1",
 				"buildFromSource": true,
 				"globalTypings": {
 					"dojo-widgets": "npm:dojo-widgets"
