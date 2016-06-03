@@ -2,9 +2,9 @@
  * An example basic application using stores/widgets/actions
  * @module dojo-app-example/app
  */
+import Promise from 'dojo-core/Promise';
 import createMemoryStore from 'dojo-widgets/util/createMemoryStore';
 import createButton from 'dojo-widgets/createButton';
-import createDijit from 'dojo-widgets/createDijit';
 import createLayoutContainer from 'dojo-widgets/createLayoutContainer';
 import createList from 'dojo-widgets/createList';
 import createPanel from 'dojo-widgets/createPanel';
@@ -14,11 +14,9 @@ import createTextInput from 'dojo-widgets/createTextInput';
 import createWidget from 'dojo-widgets/createWidget';
 import projector from 'dojo-widgets/projector';
 import { Child } from 'dojo-widgets/mixins/createParentMixin';
-import createAction from 'dojo-actions/createAction';
-import * as pageTitle from 'dojo-core/text!./text/textFile.txt';
-
-import * as DateTextBox from 'dijit/form/DateTextBox';
-
+import { ValueChangeEvent } from 'dojo-widgets/mixins/createFormFieldMixin';
+<% if (modules['dojo-actions']) { %>import createAction, { Action, ActionState } from 'dojo-actions/createAction';
+<% } %>
 /**
  * List items to populate list widget
  */
@@ -30,12 +28,23 @@ const listItems = [
 	{ id: 5, label: 'norf' }
 ];
 
+interface WidgetStateRecord {
+	[prop: string]: any;
+	id: string;
+	classes?: string[];
+	label?: string;
+	value?: any;
+	closeable?: boolean;
+	name?: string;
+	items?: any[];
+}
+
 /**
  * A memory store which handles the widget states
  */
-const widgetStore = createMemoryStore({
+const widgetStore = createMemoryStore<WidgetStateRecord>({
 	data: [
-		{ id: 'header', label: pageTitle},
+		{ id: 'header', label: 'Dojo 2 Example Application'},
 		{ id: 'tabbed-panel', classes: [ 'pad-1em' ] },
 		{ id: 'tab-1', label: 'Tab 1', closeable: false },
 		{ id: 'layout-container', classes: [ 'horizontal' ] },
@@ -49,17 +58,22 @@ const widgetStore = createMemoryStore({
 		{ id: 'tab-2-content', label: 'You can close me!' },
 		{ id: 'tab-3', classes: [ 'pad-1em' ], label: 'Tab 3', closeable: true },
 		{ id: 'tab-3-content', label: 'You can try to close me, but...'},
-		{ id: 'can-close', label: 'Can Close' }
+		{ id: 'can-close', label: 'Can Close' },
+		{ id: 'tab-4', classes: [ 'pad-1em' ], label: 'Tab 4' },
+		{ id: 'text-usd', name: 'text-usd', value: 1 },
+		{ id: 'text-gbp', name: 'text-gbp' },
+		{ id: 'text-eur', name: 'text-eur' }
 	]
 });
-
+<% if (modules['dojo-actions']) { %>
 const actionStore = createMemoryStore({
 	data: [
 		{ id: 'close-tab', canClose: false, enabled: true },
-		{ id: 'can-close-tab', enabled: true }
+		{ id: 'can-close-tab', enabled: true },
+		{ id: 'update-amount', amount: 0, usd2gbp: 0.683854, usd2eur: 0.89075, gbp2eur: 1.29691 }
 	]
 });
-
+<% } %>
 const widgets: Child[] = [];
 
 /**
@@ -163,27 +177,6 @@ tab2.append(createWidget({
 	tagName: 'div'
 }));
 
-/* Adding a Dojo 1 Dijit to a Dojo 2 Panel */
-tab2.append(createDijit({
-	Ctor: DateTextBox,
-	params: {
-		id: 'dateBox',
-		name: 'dateBox',
-		value: '16/06/1973'
-	},
-	tagName: 'input'
-}));
-
-tab2.append(createDijit({
-	Ctor: 'dijit/form/Button', /* using the MID */
-	params: {
-		label: 'Rocking it old school!',
-		onClick() {
-			alert('Yes, old school!');
-		}
-	}
-}));
-
 const tab3 = createPanel({
 	id: 'tab-3',
 	stateFrom: widgetStore
@@ -203,12 +196,11 @@ const canCloseButton = createButton({
 });
 
 tab3.append(canCloseButton);
-
+<% if (modules['dojo-actions']) { %>
 /**
  * An action that will pop an item from the list item and patch the items into the widgetstore
  */
 const actionPopList = createAction({
-	type: 'pop-list',
 	do() {
 		listItems.pop();
 		return widgetStore.patch({ id: 'list', items: listItems });
@@ -225,7 +217,6 @@ removeButton.on('click', actionPopList);
  * the widget store
  */
 const actionPushList = createAction({
-	type: 'push-list',
 	do() {
 		const label = firstName.value;
 		listItems.push({ id: listItems.length, label: label });
@@ -240,7 +231,6 @@ const actionPushList = createAction({
 addButton.on('click', actionPushList);
 
 const actionCloseTab3 = createAction({
-	type: 'close-tab',
 	do(options) {
 		if (options && options.event && !this.state.canClose) {
 			(<any> options.event).preventDefault();
@@ -252,13 +242,105 @@ actionCloseTab3.observeState('close-tab', actionStore);
 tab3.on('close', actionCloseTab3);
 
 const actionCanCloseTab3 = createAction({
-	type: 'can-close-tab',
 	do() {
 		return actionStore.patch({ canClose: true }, { id: 'close-tab' })
 			.then(() => widgetStore.patch({ label: 'Now you can close the tab!!!' }, { id: 'tab-3-content'}));
 	}
 });
 canCloseButton.on('click', actionCanCloseTab3);
+<% } %>
+/** TAB 4 */
+
+const tab4 = createPanel({
+	id: 'tab-4',
+	stateFrom: widgetStore
+});
+
+tabbedPanel.append(tab4);
+<% if (modules['dojo-actions']) { %>
+interface UpdateAmountState extends ActionState {
+	amount: number;
+	usd2gbp: number;
+	usd2eur: number;
+	gbp2eur: number;
+}
+<% } %>
+const textUSD = createTextInput({
+	stateFrom: widgetStore,
+	id: 'text-usd'
+});
+
+const textGBP = createTextInput({
+	stateFrom: widgetStore,
+	id: 'text-gbp'
+});
+
+const textEUR = createTextInput({
+	stateFrom: widgetStore,
+	id: 'text-eur'
+});
+<% if (modules['dojo-actions']) { %>
+const actionUpdateAmount = createAction({
+	stateFrom: actionStore,
+	id: 'update-amount',
+	do({ event }: { event: ValueChangeEvent<number> }) {
+		const action: Action<any, any, UpdateAmountState> = this;
+		const { value, target } = event;
+		if (value === String(Number(value))) {
+			event.preventDefault();
+			let usd: number | string;
+			let gbp: number | string;
+			let eur: number | string;
+			if (target === <any> textUSD) {
+				usd = value;
+				gbp = Math.round(Number(value) * action.state.usd2gbp * 1000) / 1000;
+				eur = Math.round(Number(value) * action.state.usd2eur * 1000) / 1000;
+			}
+			else if (target === <any> textGBP) {
+				usd = Math.round(Number(value) / action.state.usd2gbp * 1000) / 1000;
+				gbp = value;
+				eur = Math.round(Number(value) * action.state.gbp2eur * 1000) / 1000;
+			}
+			else {
+				usd = Math.round(Number(value) / action.state.usd2eur * 1000) / 1000;
+				gbp = Math.round(Number(value) / action.state.gbp2eur * 1000) / 1000;
+				eur = value;
+			}
+			console.log(usd, gbp, eur);
+			return Promise.all([
+				widgetStore.patch({ value: usd }, { id: 'text-usd' }),
+				widgetStore.patch({ value: gbp }, { id: 'text-gbp' }),
+				widgetStore.patch({ value: eur }, { id: 'text-eur' })
+			]);
+		}
+	}
+});
+
+textUSD.on('valuechange', actionUpdateAmount);
+textGBP.on('valuechange', actionUpdateAmount);
+textEUR.on('valuechange', actionUpdateAmount);
+<% } %>
+tab4.append(createWidget({
+	tagName: 'app-label',
+	state: {
+		label: 'USD'
+	}
+}));
+tab4.append(textUSD);
+tab4.append(createWidget({
+	tagName: 'app-label',
+	state: {
+		label: 'GBP'
+	}
+}));
+tab4.append(textGBP);
+tab4.append(createWidget({
+	tagName: 'app-label',
+	state: {
+		label: 'EUR'
+	}
+}));
+tab4.append(textEUR);
 
 /**
  * Attach the VDOM
