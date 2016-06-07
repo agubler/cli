@@ -13,3 +13,7 @@ npm link
 ```
 
 CLI available via `$ dojo` in your terminal
+
+## Commands
+### New App
+`dojo new <appName>`
