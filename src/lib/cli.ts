@@ -35,7 +35,11 @@ yargs
 	)
 	.command(
 		'install [installable]',
-		'Install an app or a passed installable',
+		`Install an app or a passed installable
+
+			- install github:dojo/widgets - installs dojo/widgets master branch
+			- install github:dojo/widgets#24235224323434 - install the given commit
+		`,
 		noop,
 		(argv: InstallArgs) => {
 			install(argv.installable, {

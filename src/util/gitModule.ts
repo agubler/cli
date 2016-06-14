@@ -73,12 +73,14 @@ async function unpackZipFile(archivePath: string) {
 }
 
 async function npmInstall(path: string, packages: string[] = []) {
+	console.log(`running npm install... ${packages}`);
 	return execa('npm', ['install', ...packages], { cwd: path }).then((result: any) => {
 		console.log('npm install complete');
 	});
 }
 
 async function npmPack(path: string) {
+	console.log('running npm pack...');
 	return execa('npm', ['pack'], { cwd: path }).then((result: any) => {
 		console.log('npm pack complete');
 	});
@@ -86,18 +88,17 @@ async function npmPack(path: string) {
 
 export async function build(path: string) {
 	const peerPackages: string[] = [];
-	const packageConfig = require(joinPath(path, 'package.json'));
-	const peerDeps = packageConfig.peerDependencies;
+	const {peerDependencies, name, version} = require(joinPath(path, 'package.json'));
 
-	Object.keys(peerDeps).forEach(moduleId => {
-		peerPackages.push(`${moduleId}@${peerDeps[moduleId]}`);
+	Object.keys(peerDependencies).forEach(moduleId => {
+		peerPackages.push(`${moduleId}@${peerDependencies[moduleId]}`);
 	});
 
 	await npmInstall(path, peerPackages);
 	await npmInstall(path);
 	await npmPack(path);
 
-	return `${path}/${packageConfig.name}-${packageConfig.version}.tgz`;
+	return `${path}/${name}-${version}.tgz`;
 };
 
 export async function get({owner, repo, commit}: GitInstallableDetails): Promise<string> {

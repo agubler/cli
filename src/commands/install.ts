@@ -13,6 +13,7 @@ export async function install(installable: string, skipConfig: SkipConfig) {
 	if (isGitInstallable(installable)) {
 		const installableDetails = getInstallableDetails(installable);
 		console.dir(installableDetails);
+		await get(installableDetails);
 	} else {
 		console.error(chalk.red(`Installable: ${installable} is not a reconisable git module`));
 	}
