@@ -118,7 +118,7 @@ export async function get({owner, repo, commit}: GitInstallableDetails): Promise
 		mkdirsSync(cachePath);
 		copySync(builtModule, cachePath);
 	} else {
-		winston.info('Already exists');
+		winston.log('verbose', 'Module exists in cli cache');
 	}
 
 	// mkdirsSync(destPath);
