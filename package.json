@@ -32,6 +32,7 @@
     "pkg-dir": "^1.0.0",
     "tar": "^2.2.1",
     "unzip": "^0.1.11",
+    "winston": "^2.2.0",
     "yargs": "^4.7.0"
   },
   "devDependencies": {

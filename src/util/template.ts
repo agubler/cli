@@ -1,6 +1,7 @@
 import { renderFile } from 'ejs';
 import { writeFile } from 'fs-extra';
 import * as chalk from 'chalk';
+import * as winston from 'winston';
 
 function ejsRender(source: string, replacements: Object): Promise<string> {
 	return new Promise<string>((resolve, reject) => {
@@ -25,7 +26,7 @@ function writeRenderedFile(str: string, destination: string): Promise<void> {
 }
 
 export async function render(source: string, destination: string, replacements: Object): Promise<void> {
-	console.log(chalk.green('Rendering: ') + `${destination}`);
+	winston.info(chalk.green('Rendering: ') + `${destination}`);
 
 	const str = await ejsRender(source, replacements);
 	await writeRenderedFile(str, destination);

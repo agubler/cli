@@ -1,22 +1,46 @@
 import * as yargs from 'yargs';
 import { createNew } from '../commands/newApp';
 import { install } from '../commands/install';
+import * as winston from 'winston';
 
-interface NewAppArgs extends yargs.Argv {
-	appName: string;
-	skipNpm: boolean;
-	skipGit: boolean;
-	skipRender: boolean;
-	force: boolean;
+winston.add(winston.transports.File, { filename: 'dojo-cli-log.log', level: 'verbose' });
+
+interface VerboseOptions extends yargs.Argv {
+	verbose?: boolean;
 }
 
-interface InstallArgs extends yargs.Argv {
-	installable: string;
-	force: boolean;
+interface CliOptions extends VerboseOptions {
+	skipNpm?: boolean;
+	skipGit?: boolean;
+	skipRender?: boolean;
+	force?: boolean;
+	verbose?: boolean;
+}
+
+interface NewAppArgs extends CliOptions {
+	appName: string;
+}
+
+interface InstallArgs extends CliOptions {
+	installable?: string;
 }
 
 function noop() {};
 
+// Get verbose settings
+const verboseArgvs: VerboseOptions = yargs.option({
+	'verbose': {
+		alias: 'v',
+		describe: 'Set console logging level to verbose'
+	}
+}).argv;
+
+if (verboseArgvs.verbose) {
+	winston.info('Setting verbose logging level');
+	winston.level = 'verbose';
+}
+
+// Get the rest
 yargs
 	.usage('Usage: $0 [global options] <command> [options]')
 	.strict()
@@ -51,21 +75,15 @@ yargs
 		'skipNpm': {
 			alias: 'sn',
 			describe: 'Skip npm install'
-		}
-	})
-	.options({
+		},
 		'skipGit': {
 			alias: 'sg',
 			describe: 'Skip github install'
-		}
-	})
-	.options({
+		},
 		'skipRender': {
 			alias: 'sr',
 			describe: 'Skip render files'
-		}
-	})
-	.options({
+		},
 		'force': {
 			alias: 'f',
 			describe: 'Force usage in non-empty directory'

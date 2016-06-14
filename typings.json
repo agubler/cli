@@ -9,6 +9,7 @@
     "ejs": "registry:dt/ejs#0.0.0+20160317120654",
     "fs-extra": "registry:dt/fs-extra#0.0.0+20160319124112",
     "node": "registry:dt/node#6.0.0+20160514165920",
-    "tar": "registry:dt/tar#0.0.0+20160316155526"
+    "tar": "registry:dt/tar#0.0.0+20160316155526",
+    "winston": "registry:dt/winston#0.0.0+20160417152829"
   }
 }

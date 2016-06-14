@@ -5,6 +5,7 @@ import { get as getPath } from './path';
 import { createUnzip } from 'zlib';
 import { dirname, join as joinPath } from 'path';
 import { Extract } from 'tar';
+import * as winston from 'winston';
 const got = require('got');
 
 // const unzip = require('unzip');
@@ -27,7 +28,7 @@ async function getGithubZipFile({owner, repo, commit}: GitInstallableDetails): P
 
 	mkdirsSync(dirname(destPath));
 
-	console.log(chalk.green('Downloading: ') + githubArchivePath);
+	winston.info(chalk.green('Downloading: ') + githubArchivePath);
 
 	const stream = got.stream(githubArchivePath);
 
@@ -61,7 +62,7 @@ async function streamHash(stream: any): Promise<string> {
 
 async function unpackZipFile(archivePath: string) {
 	let readStream = createReadStream(archivePath);
-	console.log(chalk.green('Unpacking: ') + `${archivePath} to ${dirname(archivePath)}`);
+	winston.info(chalk.green('Unpacking: ') + `${archivePath} to ${dirname(archivePath)}`);
 
 	return new Promise<void>((resolve, reject) => {
 		readStream
@@ -73,16 +74,18 @@ async function unpackZipFile(archivePath: string) {
 }
 
 async function npmInstall(path: string, packages: string[] = []) {
-	console.log(`running npm install... ${packages}`);
+	winston.info(`running npm install... ${packages}`);
 	return execa('npm', ['install', ...packages], { cwd: path }).then((result: any) => {
-		console.log('npm install complete');
+		winston.log('verbose', result);
+		winston.info('npm install complete');
 	});
 }
 
 async function npmPack(path: string) {
-	console.log('running npm pack...');
+	winston.info('running npm pack...');
 	return execa('npm', ['pack'], { cwd: path }).then((result: any) => {
-		console.log('npm pack complete');
+		winston.log('verbose', result);
+		winston.info('npm pack complete');
 	});
 }
 
@@ -104,16 +107,18 @@ export async function build(path: string) {
 export async function get({owner, repo, commit}: GitInstallableDetails): Promise<string> {
 	const [ md5, filePath ] = await getGithubZipFile({owner, repo, commit});
 
-	console.log(`MD5: ${md5} Filepath: ${filePath}`);
+	winston.info(`MD5: ${md5} Filepath: ${filePath}`);
 	const cachePath = getPath('cliCache', md5);
 
 	if (!existsSync(cachePath)) {
 		await unpackZipFile(filePath);
 		const builtModule = await build(joinPath(dirname(filePath), `${repo}-${commit}`));
-		console.log(`Built module is ${builtModule}`);
+		winston.info(`Built module is ${builtModule}`);
 
 		mkdirsSync(cachePath);
 		copySync(builtModule, cachePath);
+	} else {
+		winston.info('Already exists');
 	}
 
 	// mkdirsSync(destPath);
