@@ -4,3 +4,4 @@ _build
 dist
 typings
 cache
+.history

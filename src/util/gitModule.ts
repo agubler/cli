@@ -14,7 +14,13 @@ const execa = require('execa');
 // const md5 = require('md5');
 const { createHash } = require('crypto');
 
-async function getGithubZipFile(owner: string, repo: string, commit: string = 'master'): Promise<[string, string]> {
+export interface GitInstallableDetails {
+	owner: string;
+	repo: string;
+	commit: string;
+}
+
+async function getGithubZipFile({owner, repo, commit}: GitInstallableDetails): Promise<[string, string]> {
 	// get zip file to projectTemp/owner-repo-hash
 	const githubArchivePath = `https://codeload.github.com/${owner}/${repo}/tar.gz/${commit}`;
 	const destPath = getPath('temp', owner, `${repo}-${commit}.tar.gz`);
@@ -94,8 +100,8 @@ export async function build(path: string) {
 	return `${path}/${packageConfig.name}-${packageConfig.version}.tgz`;
 };
 
-export async function get(owner: string, repo: string, commit?: string): Promise<string> {
-	const [ md5, filePath ] = await getGithubZipFile(owner, repo, commit);
+export async function get({owner, repo, commit}: GitInstallableDetails): Promise<string> {
+	const [ md5, filePath ] = await getGithubZipFile({owner, repo, commit});
 
 	console.log(`MD5: ${md5} Filepath: ${filePath}`);
 	const cachePath = getPath('cliCache', md5);
@@ -118,3 +124,18 @@ export async function get(owner: string, repo: string, commit?: string): Promise
 	// return destFolderName;
 	return 'badger';
 };
+
+const gitReg = /github:(\w*)\/(\w*)#?(\w*)?/;
+
+export function isGitInstallable(installable: string): boolean {
+	return gitReg.test(installable);
+}
+
+export function getInstallableDetails(installable: string): GitInstallableDetails {
+	const [, owner, repo, commit] = installable.match(gitReg);
+	return {
+		owner,
+		repo,
+		commit: commit || 'master'
+	};
+}

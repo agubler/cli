@@ -1,11 +1,17 @@
 import * as yargs from 'yargs';
 import { createNew } from '../commands/newApp';
+import { install } from '../commands/install';
 
 interface NewAppArgs extends yargs.Argv {
 	appName: string;
 	skipNpm: boolean;
 	skipGit: boolean;
 	skipRender: boolean;
+	force: boolean;
+}
+
+interface InstallArgs extends yargs.Argv {
+	installable: string;
 	force: boolean;
 }
 
@@ -23,6 +29,16 @@ yargs
 				npm: argv.skipNpm,
 				git: argv.skipGit,
 				render: argv.skipRender,
+				force: argv.force
+			});
+		}
+	)
+	.command(
+		'install [installable]',
+		'Install an app or a passed installable',
+		noop,
+		(argv: InstallArgs) => {
+			install(argv.installable, {
 				force: argv.force
 			});
 		}

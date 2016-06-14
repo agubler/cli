@@ -18,6 +18,7 @@
 	],
 	"files": [
 		"./typings/index.d.ts",
+		"./src/commands/install.ts",
 		"./src/commands/newApp.ts",
 		"./src/util/gitModule.ts",
 		"./src/util/path.ts",

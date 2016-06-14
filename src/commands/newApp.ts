@@ -3,7 +3,7 @@ import * as inquirer from 'inquirer';
 import { readdirSync, mkdirsSync } from 'fs-extra';
 import { render } from  '../util/template';
 import { get as getPath } from '../util/path';
-import { get as getGitModule } from '../util/gitModule';
+import { get as getGitModule, isGitInstallable, getInstallableDetails } from '../util/gitModule';
 
 // Not a TS module
 const availableModules = require(getPath('config', 'availableModules.json'));
@@ -53,8 +53,6 @@ interface TypingsConfigMap {
 
 let appConfig: AppConfig;
 let skip: SkipConfig;
-
-const gitReg = /github:(\w*)\/(\w*)#?(\w*)?/;
 
 function checkForAppName(name: any): void {
 	if (!name || name.length === 0) {
@@ -131,7 +129,7 @@ function getPeerDependencies(modules: ModuleConfigMap): ModuleConfigMap {
 			for (let peerDepId in modulePeerDeps) {
 				const peerDep = modulePeerDeps[peerDepId];
 				if (currentDependencies.indexOf(peerDepId) > -1) {
-					if (returnModules[peerDepId].version !== peerDep.version || gitReg.test(peerDep.version)) {
+					if (returnModules[peerDepId].version !== peerDep.version || isGitInstallable(peerDep.version)) {
 						console.log(chalk.red('Dependency Error: ') + `Module: ${moduleId} requires PeerDependency of ${peerDepId} but conflict found`);
 					}
 				} else {
@@ -196,11 +194,12 @@ async function getGithubModules() {
 	for (let i = 0; i < moduleIds.length; i += 1) {
 		let moduleId = moduleIds[i];
 		let moduleConfig = appConfig.modules[moduleId];
-		const match = moduleConfig.version.match(gitReg);
-		if (match) {
-			/* const path =*/ await getGitModule(match[1], match[2], match[3]);
 
-			const cachePath = getPath('cliCache', `${match[1]}/${match[2]}/${match[3]}`);
+		if (isGitInstallable(moduleConfig.version)) {
+			const {owner, repo, commit} = getInstallableDetails(moduleConfig.version);
+			await getGitModule({owner, repo, commit});
+
+			const cachePath = getPath('cliCache', `${owner}/${repo}/${commit}`);
 			mkdirsSync(cachePath);
 			// await copyFile(builtFile, cachePath);
 
