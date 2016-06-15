@@ -7,7 +7,7 @@ const pkgDir = require('pkg-dir');
 
 const basePath: string = pkgDir.sync(__dirname);
 
-type PathId = 'templates'
+export type PathId = 'templates'
 	| 'config'
 	| 'destRoot'
 	| 'destSrc'

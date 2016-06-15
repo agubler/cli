@@ -2,7 +2,7 @@ import * as chalk from 'chalk';
 import * as inquirer from 'inquirer';
 import { readdirSync, mkdirsSync } from 'fs-extra';
 import { render } from  '../util/template';
-import { get as getPath } from '../util/path';
+import { get as getPath, PathId } from '../util/path';
 import { get as getGitModule, isGitInstallable, getInstallableDetails } from '../util/gitModule';
 import { log } from 'winston';
 
@@ -88,21 +88,33 @@ async function proceedCheck(name: string) {
 	}
 }
 
+const filesToRender: [PathId, string, PathId, string][] = [
+	[ 'templates', '_package.json', 'destRoot', 'package.json' ],
+	[ 'templates', '_Gruntfile.js', 'destRoot', 'Gruntfile.js' ],
+	[ 'templates', '_typings.json', 'destRoot', 'typings.json' ],
+	[ 'templates', 'tsconfig.json', 'destRoot', 'tsconfig.json' ],
+	[ 'templates', 'tslint.json', 'destRoot', 'tslint.json' ],
+	[ 'templates', '_editorconfig', 'destRoot', '.editorconfig' ],
+	[ 'templates', 'index.html', 'destSrc', 'index.html' ],
+	[ 'templates', 'index.ts', 'destSrc', 'index.ts' ],
+	[ 'templates', 'app.ts', 'destSrc', 'app.ts' ],
+	[ 'templates', 'app.styl', 'destSrc', 'app.styl']
+];
+
 async function renderFiles() {
 	if (skip.render) { return; }
 
 	log('info', chalk.bold('-- Rendering Files --'));
+	let renderPromises: Promise<void>[] = [];
 
-	await render(getPath('templates', '_package.json'), getPath('destRoot', 'package.json'), appConfig);
-	await render(getPath('templates', '_Gruntfile.js'), getPath('destRoot', 'Gruntfile.js'), appConfig);
-	await render(getPath('templates', '_typings.json'), getPath('destRoot', 'typings.json'), appConfig);
-	await render(getPath('templates', 'tsconfig.json'), getPath('destRoot', 'tsconfig.json'), appConfig);
-	await render(getPath('templates', 'tslint.json'), getPath('destRoot', 'tslint.json'), appConfig);
-	await render(getPath('templates', '_editorconfig'), getPath('destRoot', '.editorconfig'), appConfig);
-	await render(getPath('templates', 'index.html'), getPath('destSrc', 'index.html'), appConfig);
-	await render(getPath('templates', 'index.ts'), getPath('destSrc', 'index.ts'), appConfig);
-	await render(getPath('templates', 'app.ts'), getPath('destSrc', 'app.ts'), appConfig);
-	await render(getPath('templates', 'app.styl'), getPath('destSrc', 'app.styl'), appConfig);
+	await filesToRender.forEach(async ([srcBase, srcFile, destBase, destFile]) => {
+		renderPromises.push(render(getPath(srcBase, srcFile), getPath(destBase, destFile), appConfig));
+	});
+
+	const renderResponses = await Promise.all(renderPromises);
+	const renderDisplayCount = chalk.green(renderResponses.length.toString());
+
+	log('info', chalk.bold.green('Summary: ') + `Rendered: ${renderDisplayCount}`);
 };
 
 function getSelectedModuleConfig(selectedModuleIds: string[], availableModuleConfig: ModuleConfigMap): ModuleConfigMap {
@@ -120,6 +132,8 @@ function getSelectedModuleConfig(selectedModuleIds: string[], availableModuleCon
 
 function getPeerDependencies(modules: ModuleConfigMap): ModuleConfigMap {
 	const returnModules = Object.assign({}, modules);
+	let addedCount = 0;
+	let conflictCount = 0;
 
 	for (let moduleId in returnModules) {
 		const module = returnModules[moduleId];
@@ -132,14 +146,20 @@ function getPeerDependencies(modules: ModuleConfigMap): ModuleConfigMap {
 				if (currentDependencies.indexOf(peerDepId) > -1) {
 					if (returnModules[peerDepId].version !== peerDep.version || isGitInstallable(peerDep.version)) {
 						log('info', chalk.red('Dependency Error: ') + `Module: ${moduleId} requires PeerDependency of ${peerDepId} but conflict found`);
+						conflictCount++;
 					}
 				} else {
 					log('info', chalk.green('Dependency Added: ') + `Module: ${moduleId} requires PeerDependency of ${peerDepId}`);
+					addedCount++;
 					returnModules[peerDepId] = peerDep;
 				}
 			}
 		}
 	}
+	const addedDisplayCount = chalk.green(addedCount.toString());
+	const conflictDisplayCount = chalk.red(conflictCount.toString());
+
+	log('info', chalk.bold.green('Summary: ') + `Added: ${addedDisplayCount}, Conflicts: ${conflictDisplayCount}`);
 
 	return returnModules;
 }
@@ -190,13 +210,14 @@ async function getGithubModules() {
 
 	log('info', chalk.bold('-- Downloading GitHub Modules --'));
 
+	let gitModuleCount = 0;
 	const moduleIds = Object.keys(appConfig.modules);
-
 	for (let i = 0; i < moduleIds.length; i += 1) {
 		let moduleId = moduleIds[i];
 		let moduleConfig = appConfig.modules[moduleId];
 
 		if (isGitInstallable(moduleConfig.version)) {
+			gitModuleCount++;
 			const {owner, repo, commit} = getInstallableDetails(moduleConfig.version);
 			await getGitModule({owner, repo, commit});
 
@@ -207,6 +228,8 @@ async function getGithubModules() {
 			// log('info', 'BUILT FILE: ' + builtFile);
 		}
 	}
+
+	log('info', chalk.bold.green('Summary: ') + `Got: ${gitModuleCount}`);
 };
 
 async function installDependencies() {
