@@ -3,7 +3,7 @@ import * as chalk from 'chalk';
 import { createReadStream, existsSync, createWriteStream, copySync } from 'fs-extra';
 import { get as getPath, createParentDir } from './path';
 import { createUnzip } from 'zlib';
-import { dirname, join as joinPath } from 'path';
+import { dirname, join as joinPath, basename } from 'path';
 import { Extract } from 'tar';
 import { log } from 'winston';
 import * as got from 'got';
@@ -70,6 +70,7 @@ async function unpackZipFile(archivePath: string) {
 }
 
 async function npmInstall(path: string, packages: string[] = []) {
+	// return;
 	log('info', `running npm install... ${packages}`);
 	return execa('npm', ['install', ...packages], { cwd: path }).then((result: any) => {
 		log('verbose', result);
@@ -78,6 +79,7 @@ async function npmInstall(path: string, packages: string[] = []) {
 }
 
 async function npmPack(path: string) {
+	// return;
 	log('info', 'running npm pack...');
 	return execa('npm', ['pack'], { cwd: path }).then((result: any) => {
 		log('verbose', result);
@@ -107,6 +109,7 @@ export async function get({owner, repo, commit}: GitInstallableDetails, save?: b
 	log('verbose', `gitModule:get MD5: ${md5} Filepath: ${filePath}`);
 	// 2. Get path to cache location (using md5)
 	const cachePath = getPath('cliCache', md5);
+	let cachedFilePath: string;
 
 	if (!existsSync(cachePath)) {
 		// 3. If is not cached, build and place in cache
@@ -114,24 +117,19 @@ export async function get({owner, repo, commit}: GitInstallableDetails, save?: b
 		const builtModule = await build(joinPath(dirname(filePath), `${repo}-${commit}`));
 		log('info', `Built module is ${builtModule}`);
 
-		createParentDir(cachePath);
-		copySync(builtModule, cachePath);
+		cachedFilePath = joinPath(cachePath, basename(builtModule));
+		createParentDir(cachedFilePath);
+		copySync(builtModule, cachedFilePath);
 	} else {
 		// 4. If cached, return location
 		log('verbose', 'Module exists in cli cache');
 	}
 
 	// 5. Copy module to local cache - .dojo/<repo>/<commit>/<package>.tgz
-	// 6. Put ref in package.json - so it can be found again via .dojo
+	// 6. Put ref in package.json - so it can be found again via .dojo\
 
-	// mkdirsSync(destPath);
-	// mkdirsSync(archivePath);
-
-	// await getGithubZipFile(githubArchivePath, destArchivePath);
-	// await unpackZipFile(destArchivePath, destPath);
-
-	// return destFolderName;
-	return 'badger';
+	// TODO: project cache path?
+	return cachedFilePath;
 };
 
 const gitReg = /github:(\w*)\/(\w*)#?(\w*)?/;
