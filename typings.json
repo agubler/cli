@@ -1,6 +1,7 @@
 {
   "dependencies": {
     "chalk": "registry:npm/chalk#1.0.0+20160211003958",
+    "got": "registry:npm/got#6.3.0+20160524045608",
     "inquirer": "github:Tomdye/npm-inquirer#a65f7a95b96925a5c70497f671123606cba5bd85",
     "semver": "registry:npm/semver#5.0.0+20160211003958",
     "yargs": "github:Tomdye/npm-yargs#31572993bc4bddd99dae2321aa67f44eb1694b59"

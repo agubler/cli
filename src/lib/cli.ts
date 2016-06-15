@@ -3,8 +3,6 @@ import { createNew } from '../commands/newApp';
 import { install } from '../commands/install';
 import * as winston from 'winston';
 
-winston.add(winston.transports.File, { filename: 'dojo-cli-log.log', level: 'verbose' });
-
 interface VerboseOptions extends yargs.Argv {
 	verbose?: boolean;
 }
@@ -27,6 +25,19 @@ interface InstallArgs extends CliOptions {
 
 function noop() {};
 
+function setUpLogger(verbose: boolean = false) {
+	winston.remove(winston.transports.Console);
+	winston.add(winston.transports.Console, {
+		showLevel: false,
+		level: verbose ? 'verbose' : 'info'
+	});
+
+	winston.add(winston.transports.File, {
+		filename: '.dojo-cli.log',
+		level: 'verbose'
+	});
+}
+
 // Get verbose settings
 const verboseArgvs: VerboseOptions = yargs.option({
 	'verbose': {
@@ -35,10 +46,7 @@ const verboseArgvs: VerboseOptions = yargs.option({
 	}
 }).argv;
 
-if (verboseArgvs.verbose) {
-	winston.info('Setting verbose logging level');
-	winston.level = 'verbose';
-}
+setUpLogger(verboseArgvs.verbose);
 
 // Get the rest
 yargs

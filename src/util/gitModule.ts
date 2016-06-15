@@ -1,18 +1,14 @@
 // import * as mkdirp from 'mkdirp';
 import * as chalk from 'chalk';
-import { createReadStream, existsSync, createWriteStream, mkdirsSync, copySync } from 'fs-extra';
-import { get as getPath } from './path';
+import { createReadStream, existsSync, createWriteStream, copySync } from 'fs-extra';
+import { get as getPath, createParentDir } from './path';
 import { createUnzip } from 'zlib';
 import { dirname, join as joinPath } from 'path';
 import { Extract } from 'tar';
-import * as winston from 'winston';
-const got = require('got');
+import { log } from 'winston';
+import * as got from 'got';
 
-// const unzip = require('unzip');
-// const fstream = require('fstream');
-// const spawn = require('cross-spawn');
 const execa = require('execa');
-// const md5 = require('md5');
 const { createHash } = require('crypto');
 
 export interface GitInstallableDetails {
@@ -25,10 +21,10 @@ async function getGithubZipFile({owner, repo, commit}: GitInstallableDetails): P
 	// get zip file to projectTemp/owner-repo-hash
 	const githubArchivePath = `https://codeload.github.com/${owner}/${repo}/tar.gz/${commit}`;
 	const destPath = getPath('temp', owner, `${repo}-${commit}.tar.gz`);
+	log('info', 'got here');
+	createParentDir(destPath);
 
-	mkdirsSync(dirname(destPath));
-
-	winston.info(chalk.green('Downloading: ') + githubArchivePath);
+	log('info', chalk.green('Downloading: ') + githubArchivePath);
 
 	const stream = got.stream(githubArchivePath);
 
@@ -62,7 +58,7 @@ async function streamHash(stream: any): Promise<string> {
 
 async function unpackZipFile(archivePath: string) {
 	let readStream = createReadStream(archivePath);
-	winston.info(chalk.green('Unpacking: ') + `${archivePath} to ${dirname(archivePath)}`);
+	log('info', chalk.green('Unpacking: ') + `${archivePath} to ${dirname(archivePath)}`);
 
 	return new Promise<void>((resolve, reject) => {
 		readStream
@@ -74,18 +70,18 @@ async function unpackZipFile(archivePath: string) {
 }
 
 async function npmInstall(path: string, packages: string[] = []) {
-	winston.info(`running npm install... ${packages}`);
+	log('info', `running npm install... ${packages}`);
 	return execa('npm', ['install', ...packages], { cwd: path }).then((result: any) => {
-		winston.log('verbose', result);
-		winston.info('npm install complete');
+		log('verbose', result);
+		log('info', 'npm install complete');
 	});
 }
 
 async function npmPack(path: string) {
-	winston.info('running npm pack...');
+	log('info', 'running npm pack...');
 	return execa('npm', ['pack'], { cwd: path }).then((result: any) => {
-		winston.log('verbose', result);
-		winston.info('npm pack complete');
+		log('verbose', result);
+		log('info', 'npm pack complete');
 	});
 }
 
@@ -104,22 +100,29 @@ export async function build(path: string) {
 	return `${path}/${name}-${version}.tgz`;
 };
 
-export async function get({owner, repo, commit}: GitInstallableDetails): Promise<string> {
+export async function get({owner, repo, commit}: GitInstallableDetails, save?: boolean): Promise<string> {
+	// 1. Get github zip file
 	const [ md5, filePath ] = await getGithubZipFile({owner, repo, commit});
 
-	winston.info(`MD5: ${md5} Filepath: ${filePath}`);
+	log('verbose', `gitModule:get MD5: ${md5} Filepath: ${filePath}`);
+	// 2. Get path to cache location (using md5)
 	const cachePath = getPath('cliCache', md5);
 
 	if (!existsSync(cachePath)) {
+		// 3. If is not cached, build and place in cache
 		await unpackZipFile(filePath);
 		const builtModule = await build(joinPath(dirname(filePath), `${repo}-${commit}`));
-		winston.info(`Built module is ${builtModule}`);
+		log('info', `Built module is ${builtModule}`);
 
-		mkdirsSync(cachePath);
+		createParentDir(cachePath);
 		copySync(builtModule, cachePath);
 	} else {
-		winston.log('verbose', 'Module exists in cli cache');
+		// 4. If cached, return location
+		log('verbose', 'Module exists in cli cache');
 	}
+
+	// 5. Copy module to local cache - .dojo/<repo>/<commit>/<package>.tgz
+	// 6. Put ref in package.json - so it can be found again via .dojo
 
 	// mkdirsSync(destPath);
 	// mkdirsSync(archivePath);

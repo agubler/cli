@@ -4,7 +4,7 @@ import { readdirSync, mkdirsSync } from 'fs-extra';
 import { render } from  '../util/template';
 import { get as getPath } from '../util/path';
 import { get as getGitModule, isGitInstallable, getInstallableDetails } from '../util/gitModule';
-import * as winston from 'winston';
+import { log } from 'winston';
 
 // Not a TS module
 const availableModules = require(getPath('config', 'availableModules.json'));
@@ -57,7 +57,7 @@ let skip: SkipConfig;
 
 function checkForAppName(name: any): void {
 	if (!name || name.length === 0) {
-		winston.error(chalk.red('Error: ') + 'App Name is Required');
+		log('error', chalk.red('Error: ') + 'App Name is Required');
 		process.exit(1);
 	}
 };
@@ -67,7 +67,7 @@ function checkForEmptyDir(dirPath: string, exit: boolean = false): void | boolea
 	const isEmpty = folderContents.length === 0;
 
 	if (!isEmpty && exit) {
-		winston.error(chalk.red('Error: ') + 'Directory is not empty');
+		log('error', chalk.red('Error: ') + 'Directory is not empty');
 		process.exit(1);
 	} else {
 		return isEmpty;
@@ -83,7 +83,7 @@ async function proceedCheck(name: string) {
 	}]);
 
 	if (!(<ProceedAnswers> response).proceed) {
-		winston.error(chalk.red('\nExiting: ') + 'User chose to exit');
+		log('error', chalk.red('\nExiting: ') + 'User chose to exit');
 		process.exit(1);
 	}
 }
@@ -91,7 +91,7 @@ async function proceedCheck(name: string) {
 async function renderFiles() {
 	if (skip.render) { return; }
 
-	winston.info(chalk.bold('-- Rendering Files --'));
+	log('info', chalk.bold('-- Rendering Files --'));
 
 	await render(getPath('templates', '_package.json'), getPath('destRoot', 'package.json'), appConfig);
 	await render(getPath('templates', '_Gruntfile.js'), getPath('destRoot', 'Gruntfile.js'), appConfig);
@@ -131,10 +131,10 @@ function getPeerDependencies(modules: ModuleConfigMap): ModuleConfigMap {
 				const peerDep = modulePeerDeps[peerDepId];
 				if (currentDependencies.indexOf(peerDepId) > -1) {
 					if (returnModules[peerDepId].version !== peerDep.version || isGitInstallable(peerDep.version)) {
-						winston.info(chalk.red('Dependency Error: ') + `Module: ${moduleId} requires PeerDependency of ${peerDepId} but conflict found`);
+						log('info', chalk.red('Dependency Error: ') + `Module: ${moduleId} requires PeerDependency of ${peerDepId} but conflict found`);
 					}
 				} else {
-					winston.info(chalk.green('Dependency Added: ') + `Module: ${moduleId} requires PeerDependency of ${peerDepId}`);
+					log('info', chalk.green('Dependency Added: ') + `Module: ${moduleId} requires PeerDependency of ${peerDepId}`);
 					returnModules[peerDepId] = peerDep;
 				}
 			}
@@ -150,7 +150,7 @@ function mergeTypings(moduleId: string, source: TypingsConfigMap, destination: T
 		if (!destination[typingId]) {
 			destination[typingId] = typingVersion;
 		} else if (destination[typingId] !== typingVersion) {
-			winston.info(chalk.yellow('Typing Dependency Warning: ') + `Module: ${moduleId} requires typing of ${typingId}:${typingVersion} but conflict found`);
+			log('info', chalk.yellow('Typing Dependency Warning: ') + `Module: ${moduleId} requires typing of ${typingId}:${typingVersion} but conflict found`);
 		}
 	}
 }
@@ -169,7 +169,7 @@ function getTypings(modules: ModuleConfigMap): [TypingsConfigMap, TypingsConfigM
 }
 
 function createAppConfig(answers: CreateAnswers) {
-	winston.info(chalk.bold('-- Creating AppConfig From Answers --'));
+	log('info', chalk.bold('-- Creating AppConfig From Answers --'));
 
 	const allVersionedModules: ModuleConfigMap = availableModules[answers.version].modules;
 	const selectedModuleConfig = getSelectedModuleConfig(answers.modules, allVersionedModules);
@@ -188,7 +188,7 @@ function createAppConfig(answers: CreateAnswers) {
 async function getGithubModules() {
 	if (skip.git) { return; }
 
-	winston.info(chalk.bold('-- Downloading GitHub Modules --'));
+	log('info', chalk.bold('-- Downloading GitHub Modules --'));
 
 	const moduleIds = Object.keys(appConfig.modules);
 
@@ -204,7 +204,7 @@ async function getGithubModules() {
 			mkdirsSync(cachePath);
 			// await copyFile(builtFile, cachePath);
 
-			// winston.info('BUILT FILE: ' + builtFile);
+			// log('info', 'BUILT FILE: ' + builtFile);
 		}
 	}
 };
@@ -212,13 +212,13 @@ async function getGithubModules() {
 async function installDependencies() {
 	if (skip.npm) { return; }
 
-	winston.info(chalk.bold('-- Running npm install --'));
+	log('info', chalk.bold('-- Running npm install --'));
 
 	return new Promise((resolve, reject) => {
 		spawn('npm', ['install'], { stdio: 'inherit' })
 			.on('close', resolve)
 			.on('error', (err: Error) => {
-				winston.info('ERROR: ' + err);
+				log('info', 'ERROR: ' + err);
 				reject();
 			});
 	});
@@ -264,7 +264,7 @@ export async function createNew(name: string, skipConfig: SkipConfig) {
 		checkForEmptyDir(getPath('destRoot', ''), true);
 	}
 
-	winston.info(chalk.bold('-- Lets get started --\n'));
+	log('info', chalk.bold('-- Lets get started --\n'));
 
 	await proceedCheck(name);
 
@@ -276,5 +276,5 @@ export async function createNew(name: string, skipConfig: SkipConfig) {
 	await renderFiles();
 	await installDependencies();
 
-	winston.info(chalk.green.bold('\n ✔ DONE'));
+	log('info', chalk.green.bold('\n ✔ DONE'));
 };

@@ -1,6 +1,7 @@
 import { existsSync, mkdirsSync } from 'fs-extra';
 import * as path from 'path';
 import { homedir } from 'os';
+import { log } from 'winston';
 
 const pkgDir = require('pkg-dir');
 
@@ -30,19 +31,18 @@ const paths: PathMap = {
 	cliCache: path.join(homedir(), '.dojo-cli/cache')
 };
 
-// console.dir(paths);
+log('verbose', 'paths:init - ' + JSON.stringify(paths));
 
-export const get = function (base: PathId , ...pathStr: string[]): string {
-	// console.log(`PATH.GET: Get path called with base: ${base}, pathStr: ${pathStr}`);
-
+export function get(base: PathId, ...pathStr: string[]): string {
 	const resolvedPath = path.join(paths[base], ...pathStr);
-	const resolvedDir = path.dirname(resolvedPath);
-
-	if (!existsSync(resolvedDir)) {
-		// console.log(`PATH.GET: making folder ${resolvedDir}`);
-		mkdirsSync(resolvedDir);
-	}
-
-	// console.log(`PATH.GET: resolvedPath: ${resolvedPath}, resolvedDir: ${resolvedDir}`);
 	return resolvedPath;
 };
+
+export function createParentDir(resolvedPath: string) {
+	log('verbose', `path:createParentDir - called with ${resolvedPath}`);
+	const resolvedDir = path.dirname(resolvedPath);
+	if (!existsSync(resolvedDir)) {
+		log('verbose', `path:get - making folder ${resolvedDir}`);
+		mkdirsSync(resolvedDir);
+	}
+}
