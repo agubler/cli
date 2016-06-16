@@ -28,7 +28,7 @@ interface CreateAnswers extends inquirer.Answers {
 interface ModuleConfig {
 	version: string;
 	buildFromSource?: boolean;
-	peerDependencies?: ModuleConfigMap;
+	peerDependencies?: string[];
 	typings?: TypingsConfigMap;
 	globalTypings?: TypingsConfigMap;
 }
@@ -130,10 +130,10 @@ function getSelectedModuleConfig(selectedModuleIds: string[], availableModuleCon
 	return modules;
 }
 
-function getPeerDependencies(modules: ModuleConfigMap): ModuleConfigMap {
+function getPeerDependencies(modules: ModuleConfigMap, allVersionedModules: ModuleConfigMap): ModuleConfigMap {
 	const returnModules = Object.assign({}, modules);
 	let addedCount = 0;
-	let conflictCount = 0;
+	// let conflictCount = 0;
 
 	for (let moduleId in returnModules) {
 		const module = returnModules[moduleId];
@@ -141,25 +141,25 @@ function getPeerDependencies(modules: ModuleConfigMap): ModuleConfigMap {
 
 		if (modulePeerDeps) {
 			const currentDependencies = Object.keys(returnModules);
-			for (let peerDepId in modulePeerDeps) {
-				const peerDep = modulePeerDeps[peerDepId];
-				if (currentDependencies.indexOf(peerDepId) > -1) {
-					if (returnModules[peerDepId].version !== peerDep.version || isGitInstallable(peerDep.version)) {
-						log('info', chalk.red('Dependency Error: ') + `Module: ${moduleId} requires PeerDependency of ${peerDepId} but conflict found`);
-						conflictCount++;
-					}
-				} else {
+			modulePeerDeps.forEach(peerDepId => {
+				// if (currentDependencies.indexOf(peerDepId) > -1) {
+				// 	if (returnModules[peerDepId].version !== peerDep.version || isGitInstallable(peerDep.version)) {
+				// 		log('info', chalk.red('Dependency Error: ') + `Module: ${moduleId} requires PeerDependency of ${peerDepId} but conflict found`);
+				// 		conflictCount++;
+				// 	}
+				// } else {
+				if (currentDependencies.indexOf(peerDepId) < 0) {
 					log('info', chalk.green('Dependency Added: ') + `Module: ${moduleId} requires PeerDependency of ${peerDepId}`);
 					addedCount++;
-					returnModules[peerDepId] = peerDep;
+					returnModules[peerDepId] = allVersionedModules[peerDepId];
 				}
-			}
+			});
 		}
 	}
-	const addedDisplayCount = chalk.green(addedCount.toString());
-	const conflictDisplayCount = chalk.red(conflictCount.toString());
 
-	log('info', chalk.bold.green('Summary: ') + `Added: ${addedDisplayCount}, Conflicts: ${conflictDisplayCount}`);
+	const addedDisplayCount = chalk.green(addedCount.toString());
+	// const conflictDisplayCount = chalk.red(conflictCount.toString());
+	log('info', chalk.bold.green('Summary: ') + `Added: ${addedDisplayCount}`);
 
 	return returnModules;
 }
@@ -193,7 +193,7 @@ function createAppConfig(answers: CreateAnswers) {
 
 	const allVersionedModules: ModuleConfigMap = availableModules[answers.version].modules;
 	const selectedModuleConfig = getSelectedModuleConfig(answers.modules, allVersionedModules);
-	const allDependencies = getPeerDependencies(selectedModuleConfig);
+	const allDependencies = getPeerDependencies(selectedModuleConfig, allVersionedModules);
 	const [typings, globalTypings] = getTypings(allDependencies);
 
 	appConfig = {
@@ -258,10 +258,11 @@ const questions: inquirer.Questions = [
 			name: 'version',
 			message: 'What configuration of Dojo modules would you like?',
 			choices: (): inquirer.ChoiceType[] => {
-				return Object.keys(availableModules).map((key) => {
-					let config = availableModules[key];
-					return { name: config.name, value: key };
-				});
+				return Object.keys(availableModules)
+					.map((key) => {
+						let config = availableModules[key];
+						return { name: config.name, value: key };
+					});
 			},
 			default: 0
 		},
@@ -271,9 +272,11 @@ const questions: inquirer.Questions = [
 			message: 'Which modules would you like to use?',
 			choices: (answers: CreateAnswers): inquirer.ChoiceType[] => {
 				let chosenModules = availableModules[answers.version].modules;
-				return Object.keys(chosenModules).map((name) => {
-					return { name, checked: !!chosenModules[name].checked };
-				});
+				return Object.keys(chosenModules)
+					.filter(name => !chosenModules[name].hidden)
+					.map((name) => {
+						return { name, checked: !!chosenModules[name].checked };
+					});
 			}
 		}
 	];
